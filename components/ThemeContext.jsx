@@ -1,14 +1,16 @@
 import React, { createContext, useState, useContext, useEffect } from "react";
-import { useColorScheme } from "react-native";
+import { useColorScheme, Text } from "react-native";
 
 const themes = {
     light: {
         backgroundColor: "#ffffff",
-        textColor: "#000000",
+        color: "#000000",
+        __bg: '#056655',
     },
     dark: {
         backgroundColor: "#000000",
-        textColor: "#ffffff",
+        color: "#ffffff",
+        __bg: '#056655',
     },
 };
 
@@ -35,3 +37,12 @@ export const ThemeProvider = ({ children }) => {
 };
 
 export const useTheme = () => useContext(ThemeContext);
+
+export const ThemedText = ({ style, children, ...props }) => {
+    const { theme } = useTheme();
+    return (
+        <ThemedText style={[{ color: theme.textColor }, style]} {...props}>
+            {children}
+        </ThemedText>
+    );
+};

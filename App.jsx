@@ -1,36 +1,44 @@
-import { View, Text, StyleSheet } from 'react-native'
+import { View, StyleSheet, Button, SafeAreaView } from 'react-native'
 import React from 'react'
-import { ThemeProvider, useTheme } from './components/ThemeContext'
+import { useState } from 'react';
+import { ThemeProvider, useTheme, ThemedText } from './components/ThemeContext'
+import HomeContainer from './components/home/HomeContainer';
+import NavBar from './components/navbar/NavBar';
+import MenuBar from './components/navbar/MenuBar';
+import store from './contexts/store';
+import { Provider } from 'react-redux';
 
-const ThemedContent = () => {
-  const { theme } = useTheme();
-  
+const App = () => {
+  const [isMenuOpen, setMenuOpen] = useState(false);
+
+  return (
+    <Provider store={store}>
+      <ThemeProvider>
+        <AppContent isMenuOpen={isMenuOpen} setMenuOpen={setMenuOpen} />
+      </ThemeProvider>
+    </Provider>
+  )
+}
+
+const AppContent = ({ isMenuOpen, setMenuOpen }) => {
+  const { theme, toggleTheme } = useTheme();
+
   const styles = StyleSheet.create({
     container: {
+      width: '100%',
+      height: '100%',
       flex: 1,
-      justifyContent: 'center',
-      alignItems: 'center',
       backgroundColor: theme.backgroundColor,
-    },
-    text: {
-      color: theme.textColor,
     }
   });
 
   return (
-    <View style={styles.container}>
-      <Text style={styles.text}>Hello World</Text>
-      <Text style={styles.text}>Hello World</Text>
-    </View>
+    <SafeAreaView style={styles.container}>
+      <NavBar setMenuOpen={setMenuOpen} isMenuOpen={isMenuOpen} />
+      <MenuBar isMenuOpen={isMenuOpen} />
+      <HomeContainer />
+    </SafeAreaView>
   );
 };
-
-const App = () => {
-  return (
-    <ThemeProvider>
-      <ThemedContent />
-    </ThemeProvider>
-  )
-}
 
 export default App
