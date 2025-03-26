@@ -29,8 +29,8 @@ const TransectionHeader = ({ total, isIncome }) => {
     return (
         <View style={[styles.container]}>
             <View style={[styles.subContainer]}>
-                <Text style={[{ color: theme.color }, styles.title]}>{isIncome ? 'Income' : 'Expense'}</Text>
-                <Text style={[{ color: theme.color }, styles.amount]}>{total}</Text>
+                <Text style={[{ color: 'white' }, styles.title]}>{isIncome ? 'Income' : 'Expense'}</Text>
+                <Text style={[{ color: 'white' }, styles.amount]}>{'₹ '+total}</Text>
             </View>
         </View>
     )

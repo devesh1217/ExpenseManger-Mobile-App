@@ -1,37 +1,40 @@
-import { View, Text, FlatList, StyleSheet } from 'react-native'
-import React from 'react'
-import { useTheme } from '../../ThemeContext';
+import { View, StyleSheet, Text } from 'react-native'
+import React, { useEffect } from 'react'
 import TransectionEntry from './TransectionEntry';
 import TransectionHeader from './TransectionHeader';
+import { fetchTransactions } from '../../../contexts/database';
+import { useSelector, useDispatch } from 'react-redux';
+import { addDays } from 'date-fns';
+import { setIncomes } from '../../../contexts/transactionSlice';
 
 const TransectionIncome = () => {
-    const arr = [
-        { key:1, title: 'abc1', desc: 'sdf', amount: 11, account: 'Paytm' },
-        { key:2, title: 'abc2', desc: 'sdf', amount: 12, account: 'Paytm' },
-        { key:6, title: 'abc3', desc: 'sdf', amount: 13, account: 'Paytm' },
-        { key:3, title: 'abc4', desc: 'sdf', amount: 14, account: 'Paytm' },
-        { key:4, title: 'abc5', desc: 'sdf', amount: 15, account: 'Paytm' },
-        { key:5, title: 'abc6', desc: 'sdf', amount: 16, account: 'Paytm' },
-    ];
+    const incomes = useSelector((state) => state.transactions.incomes);
+    const inTotal = useSelector(state => state.transactions.inTotal);
+    const counter = useSelector((state) => state.date.value);
+    const dispatch = useDispatch();
+
+    useEffect(() => {
+        const targetDate = addDays(new Date(), counter).toISOString().split('T')[0];
+        fetchTransactions('income', targetDate, (fetchedIncomes) => {
+            dispatch(setIncomes(fetchedIncomes));
+        });
+    }, [counter]);
 
     const styles = StyleSheet.create({
         container: {
-            flex: 1,
             gap: 4,
             paddingVertical: 4,
             paddingHorizontal: 8,
-            height: 'auto'
         }
     });
 
     return (
         <View style={[styles.container]}>
-            <TransectionHeader isIncome={true} total={500} />
-            {
-                arr.map((entry) => (
-                    <TransectionEntry entry={entry} isIncome={true} key={entry.key} />
-                ))
-            }
+            <TransectionHeader isIncome={true} total={inTotal} />
+            {incomes.length === 0 && <Text style={{color: '#888', fontStyle: 'italic', textAlign: 'center'}}>No Income Transections</Text>}
+            {incomes.map((entry) => (
+                <TransectionEntry entry={entry} key={entry.id} />
+            ))}
         </View>
     );
 };

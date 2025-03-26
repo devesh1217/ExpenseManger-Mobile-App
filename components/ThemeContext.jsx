@@ -1,9 +1,9 @@
 import React, { createContext, useState, useContext, useEffect } from "react";
-import { useColorScheme, Text } from "react-native";
+import { useColorScheme } from "react-native";
 
 const themes = {
     light: {
-        backgroundColor: "#ffffff",
+        backgroundColor: "#eee",
         color: "#000000",
         __bg: '#056655',
     },

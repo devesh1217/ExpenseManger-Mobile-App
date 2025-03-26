@@ -1,15 +1,20 @@
 import { View, StyleSheet, Button, SafeAreaView } from 'react-native'
 import React from 'react'
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { ThemeProvider, useTheme, ThemedText } from './components/ThemeContext'
 import HomeContainer from './components/home/HomeContainer';
 import NavBar from './components/navbar/NavBar';
 import MenuBar from './components/navbar/MenuBar';
 import store from './contexts/store';
 import { Provider } from 'react-redux';
+import { createTables } from './contexts/database';
 
 const App = () => {
   const [isMenuOpen, setMenuOpen] = useState(false);
+
+  useEffect(() => {
+    createTables();
+  }, []);
 
   return (
     <Provider store={store}>

@@ -2,7 +2,8 @@ import { View, Text, StyleSheet } from 'react-native'
 import React, { use } from 'react'
 import { useTheme } from '../../ThemeContext'
 
-const TransectionEntry = ({ entry, isIncome }) => {
+const TransectionEntry = ({ entry }) => {
+    console.log(entry)
     const { theme } = useTheme();
     const styles = StyleSheet.create({
         container: {
@@ -27,7 +28,7 @@ const TransectionEntry = ({ entry, isIncome }) => {
             color: '#777'
         },
         amount: {
-            color: isIncome ? '#2a2' : '#a22',
+            color: entry.type === 'income' ? '#2a2' : '#a22',
             fontSize: 18,
         },
         account: {
@@ -39,10 +40,10 @@ const TransectionEntry = ({ entry, isIncome }) => {
         <View style={[styles.container]}>
             <View style={[styles.subContainer]}>
                 <Text style={[{ color: theme.color }, styles.title]}>{entry.title}</Text>
-                <Text style={[{ color: theme.color }, styles.amount]}>{entry.amount}</Text>
+                <Text style={[{ color: theme.color }, styles.amount]}>{'₹ '+entry.amount}</Text>
             </View>
             <View style={[styles.subContainer]}>
-                <Text style={[{ color: theme.color }, styles.desc]}>{entry.desc}</Text>
+                <Text style={[{ color: theme.color }, styles.desc]}>{entry.description}</Text>
                 <Text style={[{ color: theme.color }, styles.account]}>{entry.account}</Text>
             </View>
         </View>

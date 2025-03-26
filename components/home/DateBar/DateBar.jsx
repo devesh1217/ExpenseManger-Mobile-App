@@ -7,6 +7,8 @@ import { increment, decrement } from '../../../contexts/dateSlice';
 const DateBar = () => {
     const { theme } = useTheme();
     const dateCnt = useSelector(state => state.date.value);
+    const inTotal = useSelector(state => state.transactions.inTotal);
+    const exTotal = useSelector(state => state.transactions.exTotal);
     const [date, setDate] = useState(new Date());
     const dispatch = useDispatch();
 
@@ -45,6 +47,7 @@ const DateBar = () => {
                 <Text style={[{ color: 'white', fontSize: 16 }]}>{date.toISOString().split('T')[0]}</Text>
             </View>
             <View style={[styles.subContainer]}>
+                <Text style={[{ color: 'white', fontSize: 16 }]}>{'Total: '+(inTotal-exTotal)}</Text>
                 <TouchableOpacity style={[]} onPress={() => dispatch(increment())}>
                     <Text style={[{ color: 'white' }, styles.btn]}>{">"}</Text>
                 </TouchableOpacity>

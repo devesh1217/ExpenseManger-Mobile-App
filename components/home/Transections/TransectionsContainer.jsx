@@ -1,12 +1,14 @@
 import { View } from 'react-native'
 import React from 'react'
 import TransectionIncome from './TransectionIncome'
+import TransectionExpense from './TransectionExpense'
 
 const TransectionsContainer = () => {
 
     return (
-        <View style={{height: 'auto'}}>
-            <TransectionIncome></TransectionIncome>
+        <View>
+            <TransectionIncome />
+            <TransectionExpense />
         </View>
     )
 }
