@@ -3,7 +3,6 @@ import React, { use } from 'react'
 import { useTheme } from '../../ThemeContext'
 
 const TransectionEntry = ({ entry }) => {
-    console.log(entry)
     const { theme } = useTheme();
     const styles = StyleSheet.create({
         container: {

@@ -8,6 +8,7 @@ import MenuBar from './components/navbar/MenuBar';
 import store from './contexts/store';
 import { Provider } from 'react-redux';
 import { createTables } from './contexts/database';
+import { GestureHandlerRootView } from 'react-native-gesture-handler';
 
 const App = () => {
   const [isMenuOpen, setMenuOpen] = useState(false);
@@ -17,11 +18,13 @@ const App = () => {
   }, []);
 
   return (
-    <Provider store={store}>
-      <ThemeProvider>
-        <AppContent isMenuOpen={isMenuOpen} setMenuOpen={setMenuOpen} />
-      </ThemeProvider>
-    </Provider>
+    <GestureHandlerRootView style={{ flex: 1 }}>
+      <Provider store={store}>
+        <ThemeProvider>
+          <AppContent isMenuOpen={isMenuOpen} setMenuOpen={setMenuOpen} />
+        </ThemeProvider>
+      </Provider>
+    </GestureHandlerRootView>
   )
 }
 

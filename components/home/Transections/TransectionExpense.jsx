@@ -17,7 +17,6 @@ const TransectionExpense = () => {
     useEffect(() => {
         const targetDate = addDays(new Date(), counter).toISOString().split('T')[0];
         fetchTransactions('expense', targetDate, (fetchedExpenses) => {
-            console.log(expenses, fetchedExpenses, counter);
             dispatch(setExpenses(fetchedExpenses)); // Use dispatch to update Redux store
         });
     }, [counter]);
