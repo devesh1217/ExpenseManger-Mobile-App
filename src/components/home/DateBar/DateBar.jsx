@@ -1,8 +1,8 @@
 import { View, Text, StyleSheet, TouchableOpacity } from 'react-native'
 import React, { useEffect, useState } from 'react'
-import { useTheme } from '../../ThemeContext'
+import { useTheme } from '../../../hooks/ThemeContext'
 import { useSelector, useDispatch } from 'react-redux';
-import { increment, decrement } from '../../../contexts/dateSlice';
+import { increment, decrement } from '../../../../src/redux/slices/dateSlice';
 
 const DateBar = () => {
     const { theme } = useTheme();

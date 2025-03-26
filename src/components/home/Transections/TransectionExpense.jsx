@@ -1,12 +1,12 @@
 import { View, Text, FlatList, StyleSheet } from 'react-native'
 import React, { useEffect, useState } from 'react';
-import { useTheme } from '../../ThemeContext';
+import { useTheme } from '../../../hooks/ThemeContext';
 import TransectionEntry from './TransectionEntry';
 import TransectionHeader from './TransectionHeader';
-import { fetchTransactions } from '../../../contexts/database';
+import { fetchTransactions } from '../../../../src/utils/database';
 import { useDispatch, useSelector } from 'react-redux';
 import { addDays } from 'date-fns';
-import { setExpenses } from '../../../contexts/transactionSlice';
+import { setExpenses } from '../../../../src/redux/slices/transactionSlice';
 
 const TransectionExpense = () => {
     const dispatch = useDispatch(); // Add useDispatch hook

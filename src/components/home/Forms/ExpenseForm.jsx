@@ -1,13 +1,16 @@
-import { View, Text, TextInput, Button, Pressable } from 'react-native'
+import { View, Text, TextInput, Button, Pressable, Alert } from 'react-native'
 import React, { useState } from 'react'
 import { StyleSheet } from 'react-native';
-import { insertTransaction } from '../../../contexts/database';
-import { useTheme } from '../../ThemeContext';
+import { insertTransaction } from '../../../../src/utils/database';
+import { useTheme } from '../../../hooks/ThemeContext';
 import { useSelector, useDispatch } from 'react-redux';
-import { addIncome } from '../../../contexts/transactionSlice';
+import { addExpense } from '../../../../src/redux/slices/transactionSlice';
 
-const IncomeForm = () => {
-    const {theme } = useTheme();
+const ExpenseForm = () => {
+    const { theme } = useTheme();
+    const counter = useSelector((state) => state.date.value);
+    const dispatch = useDispatch();
+
     const styles = StyleSheet.create({
         form: {
             width: '100%',
@@ -46,30 +49,27 @@ const IncomeForm = () => {
         },
     });
 
-    const [incomeForm, setIncomeForm] = useState({
+    const [expenseForm, setExpenseForm] = useState({
         title: '',
         description: '',
         amount: 0,
         account: '',
         category: '',
-        type: '',
+        sentTo: '',
     });
-
-    const counter = useSelector((state) => state.date.value);
-    const dispatch = useDispatch();
 
     const handleSubmit = () => {
         const transaction = {
-            title: incomeForm.title,
-            description: incomeForm.description,
-            amount: parseFloat(incomeForm.amount),
-            account: incomeForm.account,
-            category: incomeForm.category,
-            type: 'income',
+            title: expenseForm.title,
+            description: expenseForm.description,
+            amount: parseFloat(expenseForm.amount),
+            account: expenseForm.account,
+            category: expenseForm.category,
+            type: 'expense',
         };
         insertTransaction(transaction, counter);
-        dispatch(addIncome(transaction)); // Update Redux store
-        alert('Income saved!');
+        dispatch(addExpense(transaction)); // Update Redux store
+        Alert.alert('Expense saved!');
     };
 
     return (
@@ -77,33 +77,39 @@ const IncomeForm = () => {
             <TextInput
                 placeholder='Title'
                 style={[styles.input]}
-                value={incomeForm.title}
-                onChangeText={(value) => setIncomeForm({ ...incomeForm, title: value })}
+                value={expenseForm.title}
+                onChangeText={(value) => setExpenseForm({ ...expenseForm, title: value })}
             />
             <TextInput
                 placeholder='Description'
                 style={[styles.input]}
-                value={incomeForm.description}
-                onChangeText={(value) => setIncomeForm({ ...incomeForm, description: value })}
+                value={expenseForm.description}
+                onChangeText={(value) => setExpenseForm({ ...expenseForm, description: value })}
             />
             <TextInput
                 placeholder='Amount'
                 style={[styles.input]}
-                value={incomeForm.amount.toString()}
+                value={expenseForm.amount.toString()}
                 keyboardType='numeric'
-                onChangeText={(value) => setIncomeForm({ ...incomeForm, amount: value })}
+                onChangeText={(value) => setExpenseForm({ ...expenseForm, amount: value })}
             />
             <TextInput
                 placeholder='Account'
                 style={[styles.input]}
-                value={incomeForm.account}
-                onChangeText={(value) => setIncomeForm({ ...incomeForm, account: value })}
+                value={expenseForm.account}
+                onChangeText={(value) => setExpenseForm({ ...expenseForm, account: value })}
             />
             <TextInput
                 placeholder='Category'
                 style={[styles.input]}
-                value={incomeForm.category}
-                onChangeText={(value) => setIncomeForm({ ...incomeForm, category: value })}
+                value={expenseForm.category}
+                onChangeText={(value) => setExpenseForm({ ...expenseForm, category: value })}
+            />
+            <TextInput
+                placeholder='SentTo'
+                style={[styles.input]}
+                value={expenseForm.sentTo}
+                onChangeText={(value) => setExpenseForm({ ...expenseForm, sentTo: value })}
             />
             <View style={[styles.btnWrapper]}>
                 <Pressable style={[styles.btn]} onPress={handleSubmit}>
@@ -114,4 +120,4 @@ const IncomeForm = () => {
     )
 }
 
-export default IncomeForm
+export default ExpenseForm;

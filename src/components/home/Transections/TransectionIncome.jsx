@@ -2,10 +2,10 @@ import { View, StyleSheet, Text } from 'react-native'
 import React, { useEffect } from 'react'
 import TransectionEntry from './TransectionEntry';
 import TransectionHeader from './TransectionHeader';
-import { fetchTransactions } from '../../../contexts/database';
+import { fetchTransactions } from '../../../../src/utils/database';
 import { useSelector, useDispatch } from 'react-redux';
 import { addDays } from 'date-fns';
-import { setIncomes } from '../../../contexts/transactionSlice';
+import { setIncomes } from '../../../../src/redux/slices/transactionSlice';
 
 const TransectionIncome = () => {
     const incomes = useSelector((state) => state.transactions.incomes);

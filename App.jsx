@@ -1,13 +1,13 @@
 import { View, StyleSheet, Button, SafeAreaView } from 'react-native'
 import React from 'react'
 import { useState, useEffect } from 'react';
-import { ThemeProvider, useTheme, ThemedText } from './components/ThemeContext'
-import HomeContainer from './components/home/HomeContainer';
-import NavBar from './components/navbar/NavBar';
-import MenuBar from './components/navbar/MenuBar';
-import store from './contexts/store';
+import { ThemeProvider, useTheme, ThemedText } from './src/hooks/ThemeContext'
+import HomeContainer from './src/components/home/HomeContainer';
+import NavBar from './src/components/navbar/NavBar';
+import MenuBar from './src/components/navbar/MenuBar';
+import store from './src/redux/store';
 import { Provider } from 'react-redux';
-import { createTables } from './contexts/database';
+import { createTables } from './src/utils/database';
 import { GestureHandlerRootView } from 'react-native-gesture-handler';
 
 const App = () => {

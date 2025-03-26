@@ -1,6 +1,6 @@
 import { View, Text, StyleSheet } from 'react-native'
 import React from 'react'
-import { useTheme } from '../../ThemeContext'
+import { useTheme } from '../../../hooks/ThemeContext'
 
 const TransectionHeader = ({ total, isIncome }) => {
     const { theme } = useTheme();

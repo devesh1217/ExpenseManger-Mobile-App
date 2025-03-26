@@ -10,7 +10,7 @@ import Animated, {
     runOnJS 
 } from 'react-native-reanimated';
 import { useDispatch } from 'react-redux';
-import { increment, decrement } from '../../../contexts/dateSlice';
+import { increment, decrement } from '../../../../src/redux/slices/dateSlice';
 
 const TransectionsContainer = () => {
     const dispatch = useDispatch();

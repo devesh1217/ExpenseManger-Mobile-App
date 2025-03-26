@@ -1,8 +1,8 @@
 // store.js
 import { configureStore } from '@reduxjs/toolkit';
-import counterReducer from './counterSlice'; // Example
-import dateReducer from './dateSlice'
-import transactionsReducer from './transactionSlice'
+import counterReducer from './slices/counterSlice'; // Example
+import dateReducer from './slices/dateSlice'
+import transactionsReducer from './slices/transactionSlice'
 
 const store = configureStore({
     reducer: {

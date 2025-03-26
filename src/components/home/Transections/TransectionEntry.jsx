@@ -1,6 +1,6 @@
 import { View, Text, StyleSheet } from 'react-native'
 import React, { use } from 'react'
-import { useTheme } from '../../ThemeContext'
+import { useTheme } from '../../../hooks/ThemeContext'
 
 const TransectionEntry = ({ entry }) => {
     const { theme } = useTheme();
