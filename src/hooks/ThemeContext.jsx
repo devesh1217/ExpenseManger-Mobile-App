@@ -8,7 +8,7 @@ const themes = {
         __bg: '#056655',
     },
     dark: {
-        backgroundColor: "#000000",
+        backgroundColor: "#000",
         color: "#ffffff",
         __bg: '#056655',
     },
@@ -22,11 +22,14 @@ export const ThemeProvider = ({ children }) => {
 
     useEffect(() => {
         console.log('System theme changed to:', colorScheme);
-        setTheme(themes[colorScheme] || themes.light);
+        // Ensure the theme state is updated correctly
+        if (colorScheme === 'dark' || colorScheme === 'light') {
+            setTheme(themes[colorScheme]);
+        }
     }, [colorScheme]);
 
     const toggleTheme = () => {
-        setTheme(theme === themes.light ? themes.dark : themes.light);
+        setTheme((prevTheme) => (prevTheme === themes.light ? themes.dark : themes.light));
     };
 
     return (

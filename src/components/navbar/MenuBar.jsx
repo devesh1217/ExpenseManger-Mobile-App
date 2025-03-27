@@ -1,8 +1,10 @@
 import { View, Text } from 'react-native'
 import React from 'react'
-import { StyleSheet } from 'react-native'
+import { StyleSheet, TouchableOpacity } from 'react-native'
+import { useNavigation } from '@react-navigation/native';
 
 const MenuBar = ({isMenuOpen}) => {
+    const navigation = useNavigation();
     const styles = StyleSheet.create({
         container: {
             backgroundColor: '#056655',
@@ -28,10 +30,18 @@ const MenuBar = ({isMenuOpen}) => {
     });
     return (
         <View style={[styles.container, isMenuOpen ? styles.open : styles.hidden]}>
-            <Text style={[styles.textWhite]}>MenuBar</Text>
-            <Text style={[styles.textWhite]}>MenuBar</Text>
-            <Text style={[styles.textWhite]}>MenuBar</Text>
-            <Text style={[styles.textWhite]}>MenuBar</Text>
+            <TouchableOpacity onPress={() => navigation.navigate('Home')}>
+                <Text style={[styles.textWhite]}>Home</Text>
+            </TouchableOpacity>
+            <TouchableOpacity onPress={() => navigation.navigate('Monthly')}>
+                <Text style={[styles.textWhite]}>Monthly</Text>
+            </TouchableOpacity>
+            <TouchableOpacity onPress={() => navigation.navigate('Yearly')}>
+                <Text style={[styles.textWhite]}>Yearly</Text>
+            </TouchableOpacity>
+            <TouchableOpacity onPress={() => navigation.navigate('Profile')}>
+                <Text style={[styles.textWhite]}>Profile</Text>
+            </TouchableOpacity>
         </View>
     )
 }
