@@ -1,55 +1,70 @@
 import { View, Text, StyleSheet } from 'react-native'
-import React, { use } from 'react'
+import React from 'react'
 import { useTheme } from '../../../hooks/ThemeContext'
+import Icon from 'react-native-vector-icons/Ionicons';
+import { categoryOptions } from '../../../constants/formOptions';
 
 const TransectionEntry = ({ entry }) => {
     const { theme } = useTheme();
+
+    const getCategoryIcon = (category, type) => {
+        const options = type === 'income' ? categoryOptions.income : categoryOptions.expense;
+        const categoryObj = options.find(cat => cat.value === category);
+        return categoryObj?.icon || 'ellipsis-horizontal';
+    };
+
     const styles = StyleSheet.create({
         container: {
-            justifyContent: 'space-between',
             width: '100%',
-            gap: 2,
-            marginVertical: 2,
-            
-            paddingVertical: 4,
-            paddingHorizontal: 8,
-            borderBottomWidth: 1,
-            borderBottomColor: '#444'
-
-        },
-        subContainer: {
+            padding: 10,
             flexDirection: 'row',
-            justifyContent: 'space-between',
-            width: '100%',
+            alignItems: 'center',
+            borderBottomWidth: 1,
+            borderBottomColor: theme.borderColor,
+        },
+        iconContainer: {
+            backgroundColor: theme.appThemeColor,
+            padding: 8,
+            borderRadius: 20,
+            marginRight: 12,
+        },
+        contentContainer: {
+            flex: 1,
         },
         title: {
-            fontSize: 18
+            color: theme.color,
+            fontSize: 16,
+            fontWeight: '500',
         },
-        desc: {
-            fontStyle: 'italic',
-            color: '#777'
+        details: {
+            color: theme.color + '80',
+            fontSize: 14,
         },
         amount: {
-            color: entry.type === 'income' ? '#2a2' : '#a22',
-            fontSize: 18,
-        },
-        account: {
-            color: '#a72',
-            fontStyle: 'italic'
+            color: entry.type === 'income' ? '#4CAF50' : '#F44336',
+            fontSize: 16,
+            fontWeight: '500',
         }
     });
-    return (
-        <View style={[styles.container]}>
-            <View style={[styles.subContainer]}>
-                <Text style={[{ color: theme.color }, styles.title]}>{entry.title}</Text>
-                <Text style={[{ color: theme.color }, styles.amount]}>{'₹ '+entry.amount}</Text>
-            </View>
-            <View style={[styles.subContainer]}>
-                <Text style={[{ color: theme.color }, styles.desc]}>{entry.description}</Text>
-                <Text style={[{ color: theme.color }, styles.account]}>{entry.account}</Text>
-            </View>
-        </View>
-    )
-}
 
-export default TransectionEntry
+    return (
+        <View style={styles.container}>
+            <View style={styles.iconContainer}>
+                <Icon 
+                    name={getCategoryIcon(entry.category, entry.type)} 
+                    size={20} 
+                    color="white" 
+                />
+            </View>
+            <View style={styles.contentContainer}>
+                <Text style={styles.title}>{entry.title}</Text>
+                <Text style={styles.details}>{entry.category}</Text>
+            </View>
+            <Text style={styles.amount}>
+                {entry.type === 'income' ? '+' : '-'}{entry.amount}
+            </Text>
+        </View>
+    );
+};
+
+export default TransectionEntry;

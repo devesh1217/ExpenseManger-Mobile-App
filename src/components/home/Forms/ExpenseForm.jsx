@@ -1,4 +1,6 @@
-import { View, Text, TextInput, Button, Pressable, Alert } from 'react-native'
+import { View, Text, TextInput, Pressable, Alert } from 'react-native'
+import { Picker } from '@react-native-picker/picker';
+import { accountOptions, categoryOptions } from '../../../constants/formOptions';
 import React, { useState } from 'react'
 import { StyleSheet } from 'react-native';
 import { insertTransaction } from '../../../../src/utils/database';
@@ -47,6 +49,16 @@ const ExpenseForm = ({ onClose }) => {
             borderRadius: 30,
             padding: 5
         },
+        picker: {
+            width: '100%',
+            color: theme.color,
+            backgroundColor: 'rgba(5, 102, 85, 0.1)',
+            borderRadius: 5,
+            marginVertical: 5,
+        },
+        pickerItem: {
+            color: theme.color,
+        },
     });
 
     const [expenseForm, setExpenseForm] = useState({
@@ -73,6 +85,15 @@ const ExpenseForm = ({ onClose }) => {
         onClose?.();  // Call onClose after successful submission
     };
 
+    const renderPickerItem = (item) => (
+        <Picker.Item 
+            key={item.value}
+            label={item.label}
+            value={item.value}
+            style={styles.pickerItem}
+        />
+    );
+
     return (
         <View style={[styles.form]}>
             <TextInput
@@ -94,23 +115,30 @@ const ExpenseForm = ({ onClose }) => {
                 keyboardType='numeric'
                 onChangeText={(value) => setExpenseForm({ ...expenseForm, amount: value })}
             />
-            <TextInput
-                placeholder='Account'
-                style={[styles.input]}
-                value={expenseForm.account}
-                onChangeText={(value) => setExpenseForm({ ...expenseForm, account: value })}
-            />
-            <TextInput
-                placeholder='Category'
-                style={[styles.input]}
-                value={expenseForm.category}
-                onChangeText={(value) => setExpenseForm({ ...expenseForm, category: value })}
-            />
+
+            <Picker
+                style={styles.picker}
+                selectedValue={expenseForm.account}
+                onValueChange={(value) => setExpenseForm({ ...expenseForm, account: value })}
+            >
+                <Picker.Item label="Select Account" value="" />
+                {accountOptions.map(renderPickerItem)}
+            </Picker>
+
+            <Picker
+                style={styles.picker}
+                selectedValue={expenseForm.category}
+                onValueChange={(value) => setExpenseForm({ ...expenseForm, category: value })}
+            >
+                <Picker.Item label="Select Category" value="" />
+                {categoryOptions.expense.map(renderPickerItem)}
+            </Picker>
+
             <TextInput
                 placeholder='SentTo'
                 style={[styles.input]}
                 value={expenseForm.sentTo}
-                onChangeText={(value) => setExpenseForm({ ...expenseForm, sentTo: value })}
+                onChangeText={(value) => setExpenseForm({ ...expenseForm, sentTo: value })} 
             />
             <View style={[styles.btnWrapper]}>
                 <Pressable style={[styles.btn]} onPress={handleSubmit}>

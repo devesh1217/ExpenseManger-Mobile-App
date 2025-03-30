@@ -5,6 +5,8 @@ import { insertTransaction } from '../../../../src/utils/database';
 import { useTheme } from '../../../hooks/ThemeContext';
 import { useSelector, useDispatch } from 'react-redux';
 import { addIncome } from '../../../../src/redux/slices/transactionSlice';
+import { Picker } from '@react-native-picker/picker';
+import { accountOptions, categoryOptions } from '../../../constants/formOptions';
 
 const IncomeForm = ({ onClose }) => {
     const {theme } = useTheme();
@@ -44,6 +46,16 @@ const IncomeForm = ({ onClose }) => {
             borderRadius: 30,
             padding: 5
         },
+        picker: {
+            width: '100%',
+            color: theme.color,
+            backgroundColor: 'rgba(5, 102, 85, 0.1)',
+            borderRadius: 5,
+            marginVertical: 5,
+        },
+        pickerItem: {
+            color: theme.color,
+        },
     });
 
     const [incomeForm, setIncomeForm] = useState({
@@ -73,6 +85,15 @@ const IncomeForm = ({ onClose }) => {
         onClose?.();
     };
 
+    const renderPickerItem = (item) => (
+        <Picker.Item 
+            key={item.value}
+            label={item.label}
+            value={item.value}
+            style={styles.pickerItem}
+        />
+    );
+
     return (
         <View style={[styles.form]}>
             <TextInput
@@ -94,18 +115,25 @@ const IncomeForm = ({ onClose }) => {
                 keyboardType='numeric'
                 onChangeText={(value) => setIncomeForm({ ...incomeForm, amount: value })}
             />
-            <TextInput
-                placeholder='Account'
-                style={[styles.input]}
-                value={incomeForm.account}
-                onChangeText={(value) => setIncomeForm({ ...incomeForm, account: value })}
-            />
-            <TextInput
-                placeholder='Category'
-                style={[styles.input]}
-                value={incomeForm.category}
-                onChangeText={(value) => setIncomeForm({ ...incomeForm, category: value })}
-            />
+
+            <Picker
+                style={styles.picker}
+                selectedValue={incomeForm.account}
+                onValueChange={(value) => setIncomeForm({ ...incomeForm, account: value })}
+            >
+                <Picker.Item label="Select Account" value="" />
+                {accountOptions.map(renderPickerItem)}
+            </Picker>
+
+            <Picker
+                style={styles.picker}
+                selectedValue={incomeForm.category}
+                onValueChange={(value) => setIncomeForm({ ...incomeForm, category: value })}
+            >
+                <Picker.Item label="Select Category" value="" />
+                {categoryOptions.income.map(renderPickerItem)}
+            </Picker>
+
             <View style={[styles.btnWrapper]}>
                 <Pressable style={[styles.btn]} onPress={handleSubmit}>
                     <Text style={[styles.text, styles.textCenter]} >Submit</Text>
