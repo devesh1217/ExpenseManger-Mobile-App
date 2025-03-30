@@ -1,6 +1,7 @@
-import { View, Text, StyleSheet, Image, TouchableOpacity, Pressable, Alert } from 'react-native'
+import { View, Text, StyleSheet, TouchableOpacity } from 'react-native'
 import React from 'react'
 import { useTheme } from '../../hooks/ThemeContext'
+import Icon from 'react-native-vector-icons/Ionicons';
 
 const NavBar = ({ setMenuOpen, isMenuOpen }) => {
     const {theme} = useTheme();
@@ -8,40 +9,45 @@ const NavBar = ({ setMenuOpen, isMenuOpen }) => {
         navbar: {
             backgroundColor: theme.appThemeColor,
             width: '100%',
-            height: '50',
-            padding: 10,
+            paddingVertical: 15,
+            paddingHorizontal: 20,
+            flexDirection: 'row',
             justifyContent: 'space-between',
             alignItems: 'center',
-            flexDirection: 'row'
+            elevation: 5,
+            shadowColor: "#000",
+            shadowOffset: {
+                width: 0,
+                height: 2,
+            },
+            shadowOpacity: 0.25,
+            shadowRadius: 3.84,
         },
-        textSize18: {
-            fontSize: 18
+        title: {
+            color: 'white',
+            fontSize: 20,
+            fontWeight: 'bold',
         },
-        textSize25: {
-            fontSize: 25
-        },
-        textWhite: {
-            color: 'white'
+        menuButton: {
+            padding: 5,
         }
-    })
+    });
+
     return (
-        <View style={[styles.navbar]} >
-            <View>
-                <Image source={''} />
-                <Text style={[styles.textWhite, styles.textSize18]}>MyExpenseManager</Text>
-            </View>
-            <View>
-                {/* <TouchableOpacity onPress={() => {Alert.alert("Hello","World!")}}>
-                    <Text style={[styles.textWhite, styles.textSize25]}>=</Text>
-                </TouchableOpacity> */}
-                <Pressable onPress={() => { setMenuOpen(prev => !prev) }}>
-                    <Text style={[styles.textWhite, styles.textSize25]}>
-                        {isMenuOpen ? 'x' : '='}
-                    </Text>
-                </Pressable>
-            </View>
+        <View style={styles.navbar}>
+            <Text style={styles.title}>MyExpenseManager</Text>
+            <TouchableOpacity 
+                style={styles.menuButton}
+                onPress={() => setMenuOpen(prev => !prev)}
+            >
+                <Icon 
+                    name={isMenuOpen ? 'close' : 'menu'} 
+                    size={24} 
+                    color="white" 
+                />
+            </TouchableOpacity>
         </View>
-    )
+    );
 }
 
 export default NavBar
