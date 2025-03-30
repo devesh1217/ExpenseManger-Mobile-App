@@ -13,8 +13,11 @@ const dateSlice = createSlice({
         decrement: (state) => {
             state.value -= 1;
         },
+        setValue: (state, action) => {
+            state.value = action.payload;
+        },
     },
 });
 
-export const { increment, decrement } = dateSlice.actions;
+export const { increment, decrement, setValue } = dateSlice.actions;
 export default dateSlice.reducer;

@@ -1,9 +1,11 @@
-import { View, Text, StyleSheet, TouchableOpacity } from 'react-native'
+import { View, Text, StyleSheet, TouchableOpacity, Modal, Platform } from 'react-native'
 import React, { useEffect, useState } from 'react'
 import { useTheme } from '../../../hooks/ThemeContext'
 import { useSelector, useDispatch } from 'react-redux';
 import { increment, decrement } from '../../../../src/redux/slices/dateSlice';
 import Icon from 'react-native-vector-icons/Ionicons';
+import DateTimePicker from '@react-native-community/datetimepicker';
+import { differenceInDays } from 'date-fns';
 
 const DateBar = () => {
     const { theme } = useTheme();
@@ -11,6 +13,7 @@ const DateBar = () => {
     const inTotal = useSelector(state => state.transactions.inTotal);
     const exTotal = useSelector(state => state.transactions.exTotal);
     const [date, setDate] = useState(new Date());
+    const [showDatePicker, setShowDatePicker] = useState(false);
     const dispatch = useDispatch();
 
     useEffect(() => {
@@ -18,6 +21,19 @@ const DateBar = () => {
         newDate.setDate(newDate.getDate() + dateCnt);
         setDate(newDate);
     }, [dateCnt]);
+
+    const handleDateChange = (event, selectedDate) => {
+        if (event.type === 'dismissed') {
+            setShowDatePicker(false);
+            return;
+        }
+        
+        const currentDate = new Date();
+        const daysDifference = differenceInDays(selectedDate, currentDate);
+        dispatch({ type: 'date/setValue', payload: daysDifference });
+        
+        setShowDatePicker(false);
+    };
 
     const styles = StyleSheet.create({
         container: {
@@ -57,6 +73,12 @@ const DateBar = () => {
             borderRadius: 20,
             backgroundColor: 'rgba(255,255,255,0.1)',
         },
+        dateButton: {
+            paddingVertical: 5,
+            paddingHorizontal: 10,
+            borderRadius: 5,
+            backgroundColor: 'rgba(255,255,255,0.1)',
+        }
     });
 
     return (
@@ -68,9 +90,14 @@ const DateBar = () => {
                 >
                     <Icon name="chevron-back" size={20} color="white" />
                 </TouchableOpacity>
-                <Text style={styles.dateText}>
-                    {date.toISOString().split('T')[0]}
-                </Text>
+                <TouchableOpacity 
+                    style={styles.dateButton}
+                    onPress={() => setShowDatePicker(true)}
+                >
+                    <Text style={styles.dateText}>
+                        {date.toISOString().split('T')[0]}
+                    </Text>
+                </TouchableOpacity>
             </View>
             <View style={styles.subContainer}>
                 <Text style={styles.totalText}>
@@ -83,6 +110,15 @@ const DateBar = () => {
                     <Icon name="chevron-forward" size={20} color="white" />
                 </TouchableOpacity>
             </View>
+
+            {showDatePicker && (
+                <DateTimePicker
+                    value={date}
+                    mode="date"
+                    display={Platform.OS === 'ios' ? 'spinner' : 'default'}
+                    onChange={handleDateChange}
+                />
+            )}
         </View>
     );
 };
