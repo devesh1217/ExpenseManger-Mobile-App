@@ -1,10 +1,12 @@
 import { View, Text, StyleSheet, Image, TouchableOpacity, Pressable, Alert } from 'react-native'
 import React from 'react'
+import { useTheme } from '../../hooks/ThemeContext'
 
 const NavBar = ({ setMenuOpen, isMenuOpen }) => {
+    const {theme} = useTheme();
     const styles = StyleSheet.create({
         navbar: {
-            backgroundColor: '#056655',
+            backgroundColor: theme.appThemeColor,
             width: '100%',
             height: '50',
             padding: 10,

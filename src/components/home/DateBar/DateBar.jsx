@@ -23,7 +23,7 @@ const DateBar = () => {
             width: '100%',
             paddingHorizontal: 10,
             paddingVertical: 5,
-            backgroundColor: theme.__bg,
+            backgroundColor: theme.appThemeColor,
             justifyContent: 'space-between',
             flexDirection: 'row'
         },

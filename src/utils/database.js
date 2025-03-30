@@ -57,3 +57,23 @@ export const fetchTransactions = (type, date, callback) => {
     );
   });
 };
+
+export const fetchMonthlyTransactions = (type, date, callback) => {
+  db.transaction((tx) => {
+    tx.executeSql(
+      `SELECT * FROM Transactions WHERE type = ? AND strftime('%Y-%m', date) = strftime('%Y-%m', ?);`,
+      [type, date],
+      (_, results) => {
+        const rows = results.rows;
+        let transactions = [];
+        for (let i = 0; i < rows.length; i++) {
+          transactions.push(rows.item(i));
+        }
+        callback(transactions);
+      },
+      (error) => {
+        console.error('Error fetching transactions:', error); // Log errors if any
+      }
+    );
+  });
+};

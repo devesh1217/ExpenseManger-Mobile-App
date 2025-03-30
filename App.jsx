@@ -16,7 +16,6 @@ import Monthly from './src/screens/Monthly';
 const Stack = createStackNavigator();
 
 const App = () => {
-  const [isMenuOpen, setMenuOpen] = useState(false);
 
   useEffect(() => {
     createTables();
@@ -26,15 +25,17 @@ const App = () => {
     <GestureHandlerRootView style={{ flex: 1 }}>
       <Provider store={store}>
         <ThemeProvider>
-          <AppContent isMenuOpen={isMenuOpen} setMenuOpen={setMenuOpen} />
+          <AppContent />
         </ThemeProvider>
       </Provider>
     </GestureHandlerRootView>
   )
 }
 
-const AppContent = ({ isMenuOpen, setMenuOpen }) => {
+const AppContent = () => {
   const { theme, toggleTheme } = useTheme();
+  const [isMenuOpen, setMenuOpen] = useState(false);
+
   const styles = StyleSheet.create({
     container: {
       flex: 1,
@@ -47,7 +48,7 @@ const AppContent = ({ isMenuOpen, setMenuOpen }) => {
     <SafeAreaView style={styles.container}>
       <NavBar setMenuOpen={setMenuOpen} isMenuOpen={isMenuOpen} />
       <NavigationContainer>
-        <MenuBar isMenuOpen={isMenuOpen} />
+        <MenuBar setMenuOpen={setMenuOpen} isMenuOpen={isMenuOpen} />
         <Stack.Navigator initialRouteName="Home">
           <Stack.Screen name="Home" component={HomeContainer} options={{ headerShown: false }} />
           <Stack.Screen name="Monthly" component={Monthly} options={{ headerShown: false }} />

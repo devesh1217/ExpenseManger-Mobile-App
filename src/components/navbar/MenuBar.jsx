@@ -3,7 +3,7 @@ import React from 'react'
 import { StyleSheet, TouchableOpacity } from 'react-native'
 import { useNavigation } from '@react-navigation/native';
 
-const MenuBar = ({isMenuOpen}) => {
+const MenuBar = ({isMenuOpen, setMenuOpen}) => {
     const navigation = useNavigation();
     const styles = StyleSheet.create({
         container: {
@@ -30,16 +30,16 @@ const MenuBar = ({isMenuOpen}) => {
     });
     return (
         <View style={[styles.container, isMenuOpen ? styles.open : styles.hidden]}>
-            <TouchableOpacity onPress={() => navigation.navigate('Home')}>
+            <TouchableOpacity onPress={() => {navigation.navigate('Home'); setMenuOpen(false);}}>
                 <Text style={[styles.textWhite]}>Home</Text>
             </TouchableOpacity>
-            <TouchableOpacity onPress={() => navigation.navigate('Monthly')}>
+            <TouchableOpacity onPress={() => {navigation.navigate('Monthly'); setMenuOpen(false);}}>
                 <Text style={[styles.textWhite]}>Monthly</Text>
             </TouchableOpacity>
-            <TouchableOpacity onPress={() => navigation.navigate('Yearly')}>
+            <TouchableOpacity onPress={() => {navigation.navigate('Yearly'); setMenuOpen(false);}}>
                 <Text style={[styles.textWhite]}>Yearly</Text>
             </TouchableOpacity>
-            <TouchableOpacity onPress={() => navigation.navigate('Profile')}>
+            <TouchableOpacity onPress={() => {navigation.navigate('Profile'); setMenuOpen(false);}}>
                 <Text style={[styles.textWhite]}>Profile</Text>
             </TouchableOpacity>
         </View>
