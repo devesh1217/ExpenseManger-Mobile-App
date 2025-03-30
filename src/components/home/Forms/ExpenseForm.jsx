@@ -6,7 +6,7 @@ import { useTheme } from '../../../hooks/ThemeContext';
 import { useSelector, useDispatch } from 'react-redux';
 import { addExpense } from '../../../../src/redux/slices/transactionSlice';
 
-const ExpenseForm = () => {
+const ExpenseForm = ({ onClose }) => {
     const { theme } = useTheme();
     const counter = useSelector((state) => state.date.value);
     const dispatch = useDispatch();
@@ -70,6 +70,7 @@ const ExpenseForm = () => {
         insertTransaction(transaction, counter);
         dispatch(addExpense(transaction)); // Update Redux store
         Alert.alert('Expense saved!');
+        onClose?.();  // Call onClose after successful submission
     };
 
     return (
