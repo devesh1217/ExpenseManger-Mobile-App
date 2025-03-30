@@ -1,53 +1,40 @@
-import { View } from 'react-native'
+import { StyleSheet, View } from 'react-native'
 import React from 'react'
 import TransectionIncome from './TransectionIncome'
 import TransectionExpense from './TransectionExpense'
-import { GestureDetector, Gesture } from 'react-native-gesture-handler';
-import Animated, { 
-    useSharedValue, 
-    useAnimatedStyle, 
-    withSpring,
-    runOnJS 
-} from 'react-native-reanimated';
-import { useDispatch } from 'react-redux';
-import { increment, decrement } from '../../../../src/redux/slices/dateSlice';
+import { useTheme } from '../../../hooks/ThemeContext'
 
 const TransectionsContainer = () => {
-    const dispatch = useDispatch();
-    const translateX = useSharedValue(0);
-
-    const handleIncrement = () => {
-        dispatch(increment());
-    };
-
-    const handleDecrement = () => {
-        dispatch(decrement());
-    };
-
-    const animatedStyle = useAnimatedStyle(() => ({
-        transform: [{ translateX: translateX.value }],
-    }));
-
-    const swipeGesture = Gesture.Pan()
-        .onUpdate((e) => {
-            translateX.value = e.translationX;
-        })
-        .onEnd((e) => {
-            if (e.translationX > 50) {
-                runOnJS(handleDecrement)();
-            } else if (e.translationX < -50) {
-                runOnJS(handleIncrement)();
-            }
-            translateX.value = withSpring(0);
-        });
-
+    const { theme } = useTheme();
+    const styles = StyleSheet.create({
+        section: {
+            backgroundColor: theme.cardBackground,
+            borderRadius: 10,
+            shadowColor: "#000",
+            shadowOffset: {
+                width: 0,
+                height: 2,
+            },
+            shadowOpacity: 0.25,
+            shadowRadius: 3.84,
+            elevation: 5,
+        },
+        parent:{
+            display: 'flex',
+            flexDirection: 'column',
+            justifyContent: 'center',
+            gap: '10'
+        }
+    });
     return (
-        <GestureDetector gesture={swipeGesture}>
-            <Animated.View style={animatedStyle}>
+        <View style={styles.parent}>
+            <View style={styles.section}>
                 <TransectionIncome />
+            </View>
+            <View style={styles.section}>
                 <TransectionExpense />
-            </Animated.View>
-        </GestureDetector>
+            </View>
+        </View>
     )
 }
 

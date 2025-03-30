@@ -13,6 +13,9 @@ const TransectionEntry = ({ entry }) => {
             
             paddingVertical: 4,
             paddingHorizontal: 8,
+            borderBottomWidth: 1,
+            borderBottomColor: '#444'
+
         },
         subContainer: {
             flexDirection: 'row',

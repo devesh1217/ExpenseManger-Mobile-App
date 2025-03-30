@@ -1,4 +1,4 @@
-import { View, StyleSheet, Button, SafeAreaView } from 'react-native'
+import { View, StyleSheet, SafeAreaView } from 'react-native'
 import React from 'react'
 import { useState, useEffect } from 'react';
 import { ThemeProvider, useTheme, ThemedText } from './src/hooks/ThemeContext'
@@ -39,8 +39,7 @@ const AppContent = () => {
   const styles = StyleSheet.create({
     container: {
       flex: 1,
-      backgroundColor: theme.backgroundColor, // Ensure the background color is applied
-      backgroundColor: 'black', // Ensure the background color is applied
+      backgroundColor: theme.backgroundColor,
     },
   });
 

@@ -27,7 +27,8 @@ const TransectionExpense = () => {
             gap: 4,
             paddingVertical: 4,
             paddingHorizontal: 8,
-            height: 'auto'
+            height: 'auto',
+            minHeight: 150,
         }
     });
 

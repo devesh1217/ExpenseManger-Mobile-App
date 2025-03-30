@@ -1,56 +1,59 @@
-import { View, Text, StyleSheet, Pressable, TouchableOpacity } from 'react-native'
-import React, { useState } from 'react'
+import { View, StyleSheet, TouchableOpacity, Text } from 'react-native';
+import React, { useState } from 'react';
 import IncomeForm from './IncomeForm';
 import ExpenseForm from './ExpenseForm';
+import { useTheme } from '../../../hooks/ThemeContext';
 
-const FormContainer = () => {
+const FormContainer = ({ onClose }) => {
+    const [activeForm, setActiveForm] = useState('income');
+    const { theme } = useTheme();
+
     const styles = StyleSheet.create({
-        formContainer: {
+        container: {
             width: '100%',
-            justifyContent: 'start',
-            alignItems: 'center',
-            padding: 15
         },
-        text: {
-            color: 'white',
-            fontSize: 18
-        },
-        btnWrapper:{
-            display: 'flex',
+        tabContainer: {
             flexDirection: 'row',
-            justifyContent: 'space-evenly',
-            alignContent: 'center',
-            borderRadius: 50,
-            width: '100%',
-            overflow: 'hidden'
+            marginBottom: 10,
+            paddingHorizontal: 15,
         },
-        btn:{
-            backgroundColor: '#777',
-            width: '50%'
+        tab: {
+            flex: 1,
+            padding: 10,
+            alignItems: 'center',
         },
-        textCenter:{
-            textAlign: 'center'
-        }
+        activeTab: {
+            borderBottomWidth: 2,
+            borderBottomColor: theme.appThemeColor,
+        },
+        tabText: {
+            color: theme.color,
+            fontSize: 16,
+        },
     });
-    const [isIncomeForm, setIncomeForm] = useState(false);
-    const incomeBGC = isIncomeForm ? '#056655' : '#777';
-    const expenseBGC = !isIncomeForm ? '#056655' : '#777';
 
     return (
-        <View style={[styles.formContainer]}>
-            <View style={[styles.btnWrapper]}>
-                <TouchableOpacity style={[styles.btn, {backgroundColor: incomeBGC}]} onPress={()=>setIncomeForm(true)}>
-                    <Text style={[styles.text, styles.textCenter]}>Income</Text>
+        <View style={styles.container}>
+            <View style={styles.tabContainer}>
+                <TouchableOpacity 
+                    style={[styles.tab, activeForm === 'income' && styles.activeTab]} 
+                    onPress={() => setActiveForm('income')}
+                >
+                    <Text style={styles.tabText}>Income</Text>
                 </TouchableOpacity>
-                <TouchableOpacity style={[styles.btn, {backgroundColor: expenseBGC}]} onPress={()=>setIncomeForm(false)}>
-                    <Text style={[styles.text, styles.textCenter]}>Expense</Text>
+                <TouchableOpacity 
+                    style={[styles.tab, activeForm === 'expense' && styles.activeTab]} 
+                    onPress={() => setActiveForm('expense')}
+                >
+                    <Text style={styles.tabText}>Expense</Text>
                 </TouchableOpacity>
             </View>
-            {
-                isIncomeForm ? <IncomeForm /> : <ExpenseForm />
+            {activeForm === 'income' ? 
+                <IncomeForm onClose={onClose} /> : 
+                <ExpenseForm onClose={onClose} />
             }
         </View>
-    )
-}
+    );
+};
 
-export default FormContainer
+export default FormContainer;

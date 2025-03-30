@@ -6,7 +6,7 @@ import { useTheme } from '../../../hooks/ThemeContext';
 import { useSelector, useDispatch } from 'react-redux';
 import { addIncome } from '../../../../src/redux/slices/transactionSlice';
 
-const IncomeForm = () => {
+const IncomeForm = ({ onClose }) => {
     const {theme } = useTheme();
     const styles = StyleSheet.create({
         form: {
@@ -70,6 +70,7 @@ const IncomeForm = () => {
         insertTransaction(transaction, counter);
         dispatch(addIncome(transaction)); // Update Redux store
         alert('Income saved!');
+        onClose?.();
     };
 
     return (

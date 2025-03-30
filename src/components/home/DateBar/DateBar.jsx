@@ -21,21 +21,29 @@ const DateBar = () => {
     const styles = StyleSheet.create({
         container: {
             width: '100%',
-            paddingHorizontal: 10,
-            paddingVertical: 5,
+            paddingHorizontal: 15,
+            paddingVertical: 12,
             backgroundColor: theme.appThemeColor,
             justifyContent: 'space-between',
-            flexDirection: 'row'
+            flexDirection: 'row',
+            shadowColor: "#000",
+            shadowOffset: {
+                width: 0,
+                height: 2,
+            },
+            shadowOpacity: 0.25,
+            shadowRadius: 3.84,
+            elevation: 5,
         },
         subContainer:{
             flexDirection: 'row',
-            gap: 10,
+            gap: 15,
             alignItems: 'center',
         },
         btn:{
-            fontSize: 20,
-            padding: 2,
-            paddingHorizontal: 4,
+            fontSize: 22,
+            padding: 4,
+            paddingHorizontal: 8,
         }
     });
     return (
