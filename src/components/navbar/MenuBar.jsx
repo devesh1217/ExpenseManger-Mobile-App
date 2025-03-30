@@ -66,6 +66,7 @@ const MenuBar = ({isMenuOpen, setMenuOpen}) => {
             <MenuItem icon="home" label="Home" screen="Home" />
             <MenuItem icon="calendar" label="Monthly" screen="Monthly" />
             <MenuItem icon="stats-chart" label="Yearly" screen="Yearly" />
+            <MenuItem icon="pie-chart" label="Charts" screen="Charts" />
             <MenuItem icon="person" label="Profile" screen="Profile" />
         </Animated.View>
     );

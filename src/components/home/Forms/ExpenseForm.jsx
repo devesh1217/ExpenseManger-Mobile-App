@@ -1,5 +1,4 @@
 import { View, Text, TextInput, Pressable, Alert } from 'react-native'
-import { Picker } from '@react-native-picker/picker';
 import { accountOptions, categoryOptions } from '../../../constants/formOptions';
 import React, { useState } from 'react'
 import { StyleSheet } from 'react-native';
@@ -7,6 +6,7 @@ import { insertTransaction } from '../../../../src/utils/database';
 import { useTheme } from '../../../hooks/ThemeContext';
 import { useSelector, useDispatch } from 'react-redux';
 import { addExpense } from '../../../../src/redux/slices/transactionSlice';
+import CustomPicker from '../../common/CustomPicker';
 
 const ExpenseForm = ({ onClose }) => {
     const { theme } = useTheme();
@@ -70,6 +70,9 @@ const ExpenseForm = ({ onClose }) => {
         sentTo: '',
     });
 
+    const [showAccountPicker, setShowAccountPicker] = useState(false);
+    const [showCategoryPicker, setShowCategoryPicker] = useState(false);
+
     const handleSubmit = () => {
         const transaction = {
             title: expenseForm.title,
@@ -84,15 +87,6 @@ const ExpenseForm = ({ onClose }) => {
         Alert.alert('Expense saved!');
         onClose?.();  // Call onClose after successful submission
     };
-
-    const renderPickerItem = (item) => (
-        <Picker.Item 
-            key={item.value}
-            label={item.label}
-            value={item.value}
-            style={styles.pickerItem}
-        />
-    );
 
     return (
         <View style={[styles.form]}>
@@ -116,23 +110,23 @@ const ExpenseForm = ({ onClose }) => {
                 onChangeText={(value) => setExpenseForm({ ...expenseForm, amount: value })}
             />
 
-            <Picker
-                style={styles.picker}
-                selectedValue={expenseForm.account}
+            <CustomPicker
+                value={expenseForm.account}
+                options={accountOptions}
                 onValueChange={(value) => setExpenseForm({ ...expenseForm, account: value })}
-            >
-                <Picker.Item label="Select Account" value="" />
-                {accountOptions.map(renderPickerItem)}
-            </Picker>
+                placeholder="Select Account"
+                visible={showAccountPicker}
+                setVisible={setShowAccountPicker}
+            />
 
-            <Picker
-                style={styles.picker}
-                selectedValue={expenseForm.category}
+            <CustomPicker
+                value={expenseForm.category}
+                options={categoryOptions.expense}
                 onValueChange={(value) => setExpenseForm({ ...expenseForm, category: value })}
-            >
-                <Picker.Item label="Select Category" value="" />
-                {categoryOptions.expense.map(renderPickerItem)}
-            </Picker>
+                placeholder="Select Category"
+                visible={showCategoryPicker}
+                setVisible={setShowCategoryPicker}
+            />
 
             <TextInput
                 placeholder='SentTo'

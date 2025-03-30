@@ -12,6 +12,8 @@ import { GestureHandlerRootView } from 'react-native-gesture-handler';
 import { createStackNavigator } from '@react-navigation/stack';
 import { NavigationContainer } from '@react-navigation/native';
 import Monthly from './src/screens/Monthly';
+import Yearly from './src/screens/Yearly';
+import Charts from './src/screens/Charts';
 
 const Stack = createStackNavigator();
 
@@ -51,6 +53,8 @@ const AppContent = () => {
         <Stack.Navigator initialRouteName="Home">
           <Stack.Screen name="Home" component={HomeContainer} options={{ headerShown: false }} />
           <Stack.Screen name="Monthly" component={Monthly} options={{ headerShown: false }} />
+          <Stack.Screen name="Yearly" component={Yearly} options={{ headerShown: false }} />
+          <Stack.Screen name="Charts" component={Charts} options={{ headerShown: false }} />
         </Stack.Navigator>
       </NavigationContainer>
     </SafeAreaView>

@@ -7,6 +7,7 @@ import { useSelector, useDispatch } from 'react-redux';
 import { addIncome } from '../../../../src/redux/slices/transactionSlice';
 import { Picker } from '@react-native-picker/picker';
 import { accountOptions, categoryOptions } from '../../../constants/formOptions';
+import CustomPicker from '../../common/CustomPicker';
 
 const IncomeForm = ({ onClose }) => {
     const {theme } = useTheme();
@@ -67,6 +68,9 @@ const IncomeForm = ({ onClose }) => {
         type: '',
     });
 
+    const [showAccountPicker, setShowAccountPicker] = useState(false);
+    const [showCategoryPicker, setShowCategoryPicker] = useState(false);
+
     const counter = useSelector((state) => state.date.value);
     const dispatch = useDispatch();
 
@@ -116,23 +120,23 @@ const IncomeForm = ({ onClose }) => {
                 onChangeText={(value) => setIncomeForm({ ...incomeForm, amount: value })}
             />
 
-            <Picker
-                style={styles.picker}
-                selectedValue={incomeForm.account}
+            <CustomPicker
+                value={incomeForm.account}
+                options={accountOptions}
                 onValueChange={(value) => setIncomeForm({ ...incomeForm, account: value })}
-            >
-                <Picker.Item label="Select Account" value="" />
-                {accountOptions.map(renderPickerItem)}
-            </Picker>
+                placeholder="Select Account"
+                visible={showAccountPicker}
+                setVisible={setShowAccountPicker}
+            />
 
-            <Picker
-                style={styles.picker}
-                selectedValue={incomeForm.category}
+            <CustomPicker
+                value={incomeForm.category}
+                options={categoryOptions.income}
                 onValueChange={(value) => setIncomeForm({ ...incomeForm, category: value })}
-            >
-                <Picker.Item label="Select Category" value="" />
-                {categoryOptions.income.map(renderPickerItem)}
-            </Picker>
+                placeholder="Select Category"
+                visible={showCategoryPicker}
+                setVisible={setShowCategoryPicker}
+            />
 
             <View style={[styles.btnWrapper]}>
                 <Pressable style={[styles.btn]} onPress={handleSubmit}>

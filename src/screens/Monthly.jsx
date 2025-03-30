@@ -3,7 +3,7 @@ import React, { useState, useEffect } from 'react';
 import { fetchMonthlyTransactions } from '../utils/database';
 import MaterialIcons from 'react-native-vector-icons/MaterialIcons';
 import { useTheme } from '../hooks/ThemeContext';
-
+import CustomPicker from '../components/common/CustomPicker';
 
 const Monthly = () => {
     const { theme } = useTheme();
@@ -235,113 +235,50 @@ const Monthly = () => {
         return `₹${parseFloat(amount).toFixed(2)}`;
     };
 
-    const renderMonthPicker = () => (
-        <Modal
-            visible={showMonthPicker}
-            transparent={true}
-            animationType="fade"
-            onRequestClose={() => setShowMonthPicker(false)}
-        >
-            <View style={styles.modalOverlay}>
-                <View style={[styles.pickerContainer, { width: '60%' }]}>
-                    <View style={styles.pickerHeader}>
-                        <Text style={styles.pickerTitle}>Select Month</Text>
-                        <TouchableOpacity onPress={() => setShowMonthPicker(false)} style={styles.closeButton}>
-                            <MaterialIcons name="close" size={24} color={theme.textColor} />
-                        </TouchableOpacity>
-                    </View>
-                    <FlatList
-                        data={months}
-                        style={{ maxHeight: 400 }}
-                        renderItem={({ item: month }) => (
-                            <TouchableOpacity
-                                style={[
-                                    styles.pickerItem,
-                                    selectedDate.getMonth() === months.indexOf(month) && styles.selectedItem
-                                ]}
-                                onPress={() => {
-                                    const newDate = new Date(selectedDate);
-                                    newDate.setMonth(months.indexOf(month));
-                                    setSelectedDate(newDate);
-                                    setShowMonthPicker(false);
-                                }}
-                            >
-                                <Text style={styles.pickerItemText}>{month}</Text>
-                            </TouchableOpacity>
-                        )}
-                        keyExtractor={item => item}
-                    />
-                </View>
-            </View>
-        </Modal>
-    );
+    const monthOptions = months.map(month => ({
+        label: month,
+        value: months.indexOf(month),
+        icon: 'calendar'
+    }));
 
-    const renderYearPicker = () => (
-        <Modal
-            visible={showYearPicker}
-            transparent={true}
-            animationType="fade"
-            onRequestClose={() => setShowYearPicker(false)}
-        >
-            <View style={styles.modalOverlay}>
-                <View style={[styles.pickerContainer, { width: '50%' }]}>
-                    <View style={styles.pickerHeader}>
-                        <Text style={styles.pickerTitle}>Select Year</Text>
-                        <TouchableOpacity onPress={() => setShowYearPicker(false)} style={styles.closeButton}>
-                            <MaterialIcons name="close" size={24} color={theme.textColor} />
-                        </TouchableOpacity>
-                    </View>
-                    <FlatList
-                        data={years}
-                        style={{ maxHeight: 400 }}
-                        renderItem={({ item: year }) => (
-                            <TouchableOpacity
-                                style={[
-                                    styles.pickerItem,
-                                    selectedDate.getFullYear() === year && styles.selectedItem
-                                ]}
-                                onPress={() => {
-                                    const newDate = new Date(selectedDate);
-                                    newDate.setFullYear(year);
-                                    setSelectedDate(newDate);
-                                    setShowYearPicker(false);
-                                }}
-                            >
-                                <Text style={styles.pickerItemText}>{year}</Text>
-                            </TouchableOpacity>
-                        )}
-                        keyExtractor={item => item.toString()}
-                    />
-                </View>
-            </View>
-        </Modal>
-    );
+    const yearOptions = years.map(year => ({
+        label: year.toString(),
+        value: year,
+        icon: 'calendar'
+    }));
 
     return (
         <View style={styles.container}>
             <View style={styles.datePickerRow}>
-                <TouchableOpacity
-                    style={[styles.datePickerButton, { flex: 2, marginRight: 8 }]}
-                    onPress={() => setShowMonthPicker(true)}
-                >
-                    <MaterialIcons name="calendar-today" size={24} color={theme.textColor} />
-                    <Text style={styles.datePickerText}>
-                        {selectedDate.toLocaleString('default', { month: 'long' })}
-                    </Text>
-                </TouchableOpacity>
-                <TouchableOpacity
-                    style={[styles.datePickerButton, { flex: 1 }]}
-                    onPress={() => setShowYearPicker(true)}
-                >
-                    <MaterialIcons name="date-range" size={24} color={theme.textColor} />
-                    <Text style={styles.datePickerText}>
-                        {selectedDate.getFullYear()}
-                    </Text>
-                </TouchableOpacity>
+                <View style={{ flex: 2, marginRight: 8 }}>
+                    <CustomPicker
+                        value={selectedDate.getMonth()}
+                        options={monthOptions}
+                        onValueChange={(month) => {
+                            const newDate = new Date(selectedDate);
+                            newDate.setMonth(month);
+                            setSelectedDate(newDate);
+                        }}
+                        placeholder="Select Month"
+                        visible={showMonthPicker}
+                        setVisible={setShowMonthPicker}
+                    />
+                </View>
+                <View style={{ flex: 1 }}>
+                    <CustomPicker
+                        value={selectedDate.getFullYear()}
+                        options={yearOptions}
+                        onValueChange={(year) => {
+                            const newDate = new Date(selectedDate);
+                            newDate.setFullYear(year);
+                            setSelectedDate(newDate);
+                        }}
+                        placeholder="Select Year"
+                        visible={showYearPicker}
+                        setVisible={setShowYearPicker}
+                    />
+                </View>
             </View>
-
-            {renderMonthPicker()}
-            {renderYearPicker()}
 
             <View style={styles.summaryContainer}>
                 <View style={styles.summaryItem}>
