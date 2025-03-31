@@ -1,5 +1,5 @@
 import { View, Text, TextInput, Button, Pressable } from 'react-native'
-import React, { useState } from 'react'
+import React, { useState, useEffect } from 'react'
 import { StyleSheet } from 'react-native';
 import { insertTransaction } from '../../../../src/utils/database';
 import { useTheme } from '../../../hooks/ThemeContext';
@@ -8,9 +8,10 @@ import { addIncome } from '../../../../src/redux/slices/transactionSlice';
 import { Picker } from '@react-native-picker/picker';
 import { accountOptions, categoryOptions } from '../../../constants/formOptions';
 import CustomPicker from '../../common/CustomPicker';
+import { getAccounts, getCategories } from '../../../../src/utils/database';
 
 const IncomeForm = ({ onClose }) => {
-    const {theme } = useTheme();
+    const { theme } = useTheme();
     const styles = StyleSheet.create({
         form: {
             width: '100%',
@@ -57,6 +58,11 @@ const IncomeForm = ({ onClose }) => {
         pickerItem: {
             color: theme.color,
         },
+        pickerContainer:{
+            width: '100%',
+            flexDirection: 'row',
+            justifyContent: 'space-between',
+        }
     });
 
     const [incomeForm, setIncomeForm] = useState({
@@ -70,6 +76,27 @@ const IncomeForm = ({ onClose }) => {
 
     const [showAccountPicker, setShowAccountPicker] = useState(false);
     const [showCategoryPicker, setShowCategoryPicker] = useState(false);
+    const [customAccounts, setCustomAccounts] = useState([]);
+    const [customCategories, setCustomCategories] = useState([]);
+
+    useEffect(() => {
+        loadCustomOptions();
+    }, []);
+
+    const loadCustomOptions = async () => {
+        const accounts = await getAccounts();
+        const categories = await getCategories();
+        setCustomAccounts(accounts.map(acc => ({
+            label: acc.name,
+            value: acc.name,
+            icon: 'wallet-outline' // default icon for custom accounts
+        })));
+        setCustomCategories(categories.income.map(cat => ({
+            label: cat.name,
+            value: cat.name,
+            icon: 'add-circle-outline' // default icon for custom income categories
+        })));
+    };
 
     const counter = useSelector((state) => state.date.value);
     const dispatch = useDispatch();
@@ -90,7 +117,7 @@ const IncomeForm = ({ onClose }) => {
     };
 
     const renderPickerItem = (item) => (
-        <Picker.Item 
+        <Picker.Item
             key={item.value}
             label={item.label}
             value={item.value}
@@ -119,24 +146,25 @@ const IncomeForm = ({ onClose }) => {
                 keyboardType='numeric'
                 onChangeText={(value) => setIncomeForm({ ...incomeForm, amount: value })}
             />
+            <View style={[styles.pickerContainer]}>
+                <CustomPicker
+                    value={incomeForm.account}
+                    options={[...accountOptions, ...customAccounts]}
+                    onValueChange={(value) => setIncomeForm({ ...incomeForm, account: value })}
+                    placeholder="Select Account"
+                    visible={showAccountPicker}
+                    setVisible={setShowAccountPicker}
+                />
 
-            <CustomPicker
-                value={incomeForm.account}
-                options={accountOptions}
-                onValueChange={(value) => setIncomeForm({ ...incomeForm, account: value })}
-                placeholder="Select Account"
-                visible={showAccountPicker}
-                setVisible={setShowAccountPicker}
-            />
-
-            <CustomPicker
-                value={incomeForm.category}
-                options={categoryOptions.income}
-                onValueChange={(value) => setIncomeForm({ ...incomeForm, category: value })}
-                placeholder="Select Category"
-                visible={showCategoryPicker}
-                setVisible={setShowCategoryPicker}
-            />
+                <CustomPicker
+                    value={incomeForm.category}
+                    options={[...categoryOptions.income, ...customCategories]}
+                    onValueChange={(value) => setIncomeForm({ ...incomeForm, category: value })}
+                    placeholder="Select Category"
+                    visible={showCategoryPicker}
+                    setVisible={setShowCategoryPicker}
+                />
+            </View>
 
             <View style={[styles.btnWrapper]}>
                 <Pressable style={[styles.btn]} onPress={handleSubmit}>

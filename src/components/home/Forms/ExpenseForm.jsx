@@ -1,17 +1,40 @@
 import { View, Text, TextInput, Pressable, Alert } from 'react-native'
 import { accountOptions, categoryOptions } from '../../../constants/formOptions';
-import React, { useState } from 'react'
+import React, { useState, useEffect } from 'react'
 import { StyleSheet } from 'react-native';
 import { insertTransaction } from '../../../../src/utils/database';
 import { useTheme } from '../../../hooks/ThemeContext';
 import { useSelector, useDispatch } from 'react-redux';
 import { addExpense } from '../../../../src/redux/slices/transactionSlice';
 import CustomPicker from '../../common/CustomPicker';
+import { getAccounts, getCategories } from '../../../../src/utils/database';
 
 const ExpenseForm = ({ onClose }) => {
     const { theme } = useTheme();
     const counter = useSelector((state) => state.date.value);
     const dispatch = useDispatch();
+    const [customAccounts, setCustomAccounts] = useState([]);
+    const [customCategories, setCustomCategories] = useState([]);
+
+    useEffect(() => {
+        loadCustomOptions();
+    }, []);
+
+    const loadCustomOptions = async () => {
+        const accounts = await getAccounts();
+        const categories = await getCategories();
+        console.log(accounts)
+        setCustomAccounts(accounts.map(acc => ({
+            label: acc.name,
+            value: acc.name,
+            icon: 'wallet-outline' // default icon for custom accounts
+        })));
+        setCustomCategories(categories.expense.map(cat => ({
+            label: cat.name,
+            value: cat.name,
+            icon: 'remove-circle-outline' // default icon for custom expense categories
+        })));
+    };
 
     const styles = StyleSheet.create({
         form: {
@@ -59,6 +82,12 @@ const ExpenseForm = ({ onClose }) => {
         pickerItem: {
             color: theme.color,
         },
+
+        pickerContainer: {
+            width: '100%',
+            flexDirection: 'row',
+            justifyContent: 'space-between',
+        }
     });
 
     const [expenseForm, setExpenseForm] = useState({
@@ -109,30 +138,32 @@ const ExpenseForm = ({ onClose }) => {
                 keyboardType='numeric'
                 onChangeText={(value) => setExpenseForm({ ...expenseForm, amount: value })}
             />
+            <View style={[styles.pickerContainer]} >
 
-            <CustomPicker
-                value={expenseForm.account}
-                options={accountOptions}
-                onValueChange={(value) => setExpenseForm({ ...expenseForm, account: value })}
-                placeholder="Select Account"
-                visible={showAccountPicker}
-                setVisible={setShowAccountPicker}
-            />
+                <CustomPicker
+                    value={expenseForm.account}
+                    options={[...accountOptions, ...customAccounts]}
+                    onValueChange={(value) => setExpenseForm({ ...expenseForm, account: value })}
+                    placeholder="Select Account"
+                    visible={showAccountPicker}
+                    setVisible={setShowAccountPicker}
+                />
 
-            <CustomPicker
-                value={expenseForm.category}
-                options={categoryOptions.expense}
-                onValueChange={(value) => setExpenseForm({ ...expenseForm, category: value })}
-                placeholder="Select Category"
-                visible={showCategoryPicker}
-                setVisible={setShowCategoryPicker}
-            />
+                <CustomPicker
+                    value={expenseForm.category}
+                    options={[...categoryOptions.expense, ...customCategories]}
+                    onValueChange={(value) => setExpenseForm({ ...expenseForm, category: value })}
+                    placeholder="Select Category"
+                    visible={showCategoryPicker}
+                    setVisible={setShowCategoryPicker}
+                />
 
+            </View>
             <TextInput
                 placeholder='SentTo'
                 style={[styles.input]}
                 value={expenseForm.sentTo}
-                onChangeText={(value) => setExpenseForm({ ...expenseForm, sentTo: value })} 
+                onChangeText={(value) => setExpenseForm({ ...expenseForm, sentTo: value })}
             />
             <View style={[styles.btnWrapper]}>
                 <Pressable style={[styles.btn]} onPress={handleSubmit}>

@@ -36,7 +36,7 @@ const NavBar = ({ setMenuOpen, isMenuOpen }) => {
     return (
         <View style={styles.navbar}>
             <Text style={styles.title}>MyExpenseManager</Text>
-            <TouchableOpacity 
+            {/* <TouchableOpacity 
                 style={styles.menuButton}
                 onPress={() => setMenuOpen(prev => !prev)}
             >
@@ -45,7 +45,7 @@ const NavBar = ({ setMenuOpen, isMenuOpen }) => {
                     size={24} 
                     color="white" 
                 />
-            </TouchableOpacity>
+            </TouchableOpacity> */}
         </View>
     );
 }

@@ -12,7 +12,6 @@ const CustomPicker = ({
     setVisible 
 }) => {
     const { theme } = useTheme();
-
     const styles = StyleSheet.create({
         pickerButton: {
             flexDirection: 'row',

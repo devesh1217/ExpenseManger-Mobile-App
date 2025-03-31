@@ -10,6 +10,10 @@ const TransectionEntry = ({ entry }) => {
     const getCategoryIcon = (category, type) => {
         const options = type === 'income' ? categoryOptions.income : categoryOptions.expense;
         const categoryObj = options.find(cat => cat.value === category);
+        // Return default icons for custom categories
+        if (!categoryObj) {
+            return type === 'income' ? 'add-circle-outline' : 'remove-circle-outline';
+        }
         return categoryObj?.icon || 'ellipsis-horizontal';
     };
 
@@ -40,29 +44,39 @@ const TransectionEntry = ({ entry }) => {
             color: theme.color + '80',
             fontSize: 14,
         },
+        account: {
+            color: theme.color + '80',
+            fontSize: 14,
+            fontStyle: 'italic',
+            textAlign: 'right'
+        },
         amount: {
             color: entry.type === 'income' ? '#4CAF50' : '#F44336',
             fontSize: 16,
             fontWeight: '500',
+            textAlign: 'right'
         }
     });
 
     return (
         <View style={styles.container}>
             <View style={styles.iconContainer}>
-                <Icon 
-                    name={getCategoryIcon(entry.category, entry.type)} 
-                    size={20} 
-                    color="white" 
+                <Icon
+                    name={getCategoryIcon(entry.category, entry.type)}
+                    size={20}
+                    color="white"
                 />
             </View>
             <View style={styles.contentContainer}>
                 <Text style={styles.title}>{entry.title}</Text>
                 <Text style={styles.details}>{entry.category}</Text>
             </View>
-            <Text style={styles.amount}>
-                {entry.type === 'income' ? '+' : '-'}{entry.amount}
-            </Text>
+            <View>
+                <Text style={styles.amount}>
+                    {entry.type === 'income' ? '+' : '-'}{entry.amount}
+                </Text>
+                <Text style={styles.account}>{entry.account}</Text>
+            </View>
         </View>
     );
 };

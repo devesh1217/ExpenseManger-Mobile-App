@@ -9,13 +9,15 @@ import store from './src/redux/store';
 import { Provider } from 'react-redux';
 import { createTables } from './src/utils/database';
 import { GestureHandlerRootView } from 'react-native-gesture-handler';
-import { createStackNavigator } from '@react-navigation/stack';
+import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
 import { NavigationContainer } from '@react-navigation/native';
 import Monthly from './src/screens/Monthly';
 import Yearly from './src/screens/Yearly';
 import Charts from './src/screens/Charts';
+import Ionicons from 'react-native-vector-icons/Ionicons';
+import Profile from './src/screens/Profile';
 
-const Stack = createStackNavigator();
+const Tab = createBottomTabNavigator();
 
 const App = () => {
 
@@ -49,13 +51,41 @@ const AppContent = () => {
     <SafeAreaView style={styles.container}>
       <NavBar setMenuOpen={setMenuOpen} isMenuOpen={isMenuOpen} />
       <NavigationContainer>
-        <MenuBar setMenuOpen={setMenuOpen} isMenuOpen={isMenuOpen} />
-        <Stack.Navigator initialRouteName="Home">
-          <Stack.Screen name="Home" component={HomeContainer} options={{ headerShown: false }} />
-          <Stack.Screen name="Monthly" component={Monthly} options={{ headerShown: false }} />
-          <Stack.Screen name="Yearly" component={Yearly} options={{ headerShown: false }} />
-          <Stack.Screen name="Charts" component={Charts} options={{ headerShown: false }} />
-        </Stack.Navigator>
+        {/* <MenuBar setMenuOpen={setMenuOpen} isMenuOpen={isMenuOpen} /> */}
+        <Tab.Navigator
+          screenOptions={({ route }) => ({
+            tabBarIcon: ({ focused, color, size }) => {
+              let iconName;
+
+              if (route.name === 'Home') {
+                iconName = focused ? 'home' : 'home-outline';
+              } else if (route.name === 'Monthly') {
+                iconName = focused ? 'calendar' : 'calendar-outline';
+              } else if (route.name === 'Yearly') {
+                iconName = focused ? 'stats-chart' : 'stats-chart-outline';
+              } else if (route.name === 'Charts') {
+                iconName = focused ? 'pie-chart' : 'pie-chart-outline';
+              } else if (route.name === 'Profile') {
+                iconName = focused ? 'person' : 'person-outline';
+              }
+
+              return <Ionicons name={iconName} size={size} color={color} />;
+            },
+            tabBarActiveTintColor: theme.focusedTabIconColor,
+            tabBarInactiveTintColor: theme.textColor,
+            tabBarStyle: {
+              backgroundColor: theme.backgroundColor,
+              borderTopColor: theme.borderColor,
+            },
+            headerShown: false,
+          })}
+        >
+          <Tab.Screen name="Home" component={HomeContainer} />
+          <Tab.Screen name="Monthly" component={Monthly} />
+          <Tab.Screen name="Yearly" component={Yearly} />
+          <Tab.Screen name="Charts" component={Charts} />
+          <Tab.Screen name="Profile" component={Profile} />
+        </Tab.Navigator>
       </NavigationContainer>
     </SafeAreaView>
   );

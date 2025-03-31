@@ -13,6 +13,7 @@ const themes = {
         modalBackground: "#fff",
         selectedItemBackground: "#e0e0e0",
         appThemeColor: '#056655',
+        focusedTabIconColor: '#056655'
     },
     dark: {
         backgroundColor: "#121212",
@@ -25,6 +26,7 @@ const themes = {
         modalBackground: "#1E1E1E",
         selectedItemBackground: "#333",
         appThemeColor: '#056655',
+        focusedTabIconColor: '#058877'
     },
 };
 
