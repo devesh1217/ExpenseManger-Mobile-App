@@ -1,0 +1,415 @@
+import { View, Text, StyleSheet, ScrollView, TouchableOpacity, Dimensions } from 'react-native';
+import React, { useState, useEffect } from 'react';
+import { useTheme } from '../hooks/ThemeContext';
+import CustomPicker from '../components/common/CustomPicker';
+import { fetchMonthlyTransactions } from '../utils/database';
+import { categoryOptions } from '../constants/formOptions';
+import { PieChart } from 'react-native-gifted-charts';
+
+const Charts = () => {
+    const { theme } = useTheme();
+    const [selectedMonth, setSelectedMonth] = useState(new Date().getMonth());
+    const [selectedYear, setSelectedYear] = useState(new Date().getFullYear());
+    const [showMonthPicker, setShowMonthPicker] = useState(false);
+    const [showYearPicker, setShowYearPicker] = useState(false);
+    const [monthlyData, setMonthlyData] = useState({ income: {}, expense: {} });
+    const [yearlyData, setYearlyData] = useState({ income: {}, expense: {} });
+    const [activeTab, setActiveTab] = useState('monthly');
+    const [activeType, setActiveType] = useState('income');
+
+    const months = [
+        'January', 'February', 'March', 'April', 'May', 'June',
+        'July', 'August', 'September', 'October', 'November', 'December'
+    ];
+
+    const years = Array.from(
+        { length: 5 },
+        (_, i) => new Date().getFullYear() - i
+    );
+
+    const monthOptions = months.map(month => ({
+        label: month,
+        value: months.indexOf(month),
+        icon: 'calendar'
+    }));
+
+    const yearOptions = years.map(year => ({
+        label: year.toString(),
+        value: year,
+        icon: 'calendar'
+    }));
+
+    useEffect(() => {
+        fetchMonthData();
+        fetchYearData();
+    }, [selectedMonth, selectedYear]);
+
+    const fetchMonthData = async () => {
+        const monthNum = String(selectedMonth + 1).padStart(2, '0');
+        const dateString = `${selectedYear}-${monthNum}-01`;
+
+        const processTransactions = (transactions, type) => {
+            return transactions.reduce((acc, t) => {
+                acc[t.category] = (acc[t.category] || 0) + parseFloat(t.amount);
+                return acc;
+            }, {});
+        };
+
+        const income = await new Promise(resolve => {
+            fetchMonthlyTransactions('income', dateString, (data) => resolve(processTransactions(data, 'income')));
+        });
+
+        const expense = await new Promise(resolve => {
+            fetchMonthlyTransactions('expense', dateString, (data) => resolve(processTransactions(data, 'expense')));
+        });
+
+        setMonthlyData({ income, expense });
+    };
+
+    const fetchYearData = async () => {
+        const yearIncome = {};
+        const yearExpense = {};
+
+        for (let month = 0; month < 12; month++) {
+            const monthNum = String(month + 1).padStart(2, '0');
+            const dateString = `${selectedYear}-${monthNum}-01`;
+
+            await new Promise(resolve => {
+                fetchMonthlyTransactions('income', dateString, (data) => {
+                    data.forEach(t => {
+                        yearIncome[t.category] = (yearIncome[t.category] || 0) + parseFloat(t.amount);
+                    });
+                    resolve();
+                });
+            });
+
+            await new Promise(resolve => {
+                fetchMonthlyTransactions('expense', dateString, (data) => {
+                    data.forEach(t => {
+                        yearExpense[t.category] = (yearExpense[t.category] || 0) + parseFloat(t.amount);
+                    });
+                    resolve();
+                });
+            });
+        }
+
+        setYearlyData({ income: yearIncome, expense: yearExpense });
+    };
+
+    const getChartData = (data, type) => {
+        const colors = [
+            '#FF6384', '#36A2EB', '#FFCE56', '#4BC0C0', '#9966FF',
+            '#FF9F40', '#FF6384', '#4BC0C0', '#FFCE56'
+        ];
+
+        return Object.entries(data).map(([category, amount], index) => ({
+            value: amount,
+            label: category,
+            color: colors[index % colors.length],
+            labelTextStyle: { color: theme.color },
+            legendLabel: `${category}: ₹${amount.toFixed(2)}`
+        }));
+    };
+
+    const getLegendData = (data, type) => {
+        const total = Object.values(data).reduce((sum, amount) => sum + amount, 0);
+        return Object.entries(data).map(([category, amount], index) => ({
+            category,
+            amount,
+            percentage: ((amount / total) * 100).toFixed(1)
+        }));
+    };
+
+    const styles = StyleSheet.create({
+        container: {
+            flex: 1,
+            backgroundColor: theme.backgroundColor,
+        },
+        header: {
+            padding: 16,
+            backgroundColor: theme.cardBackground,
+            elevation: 4,
+        },
+        section: {
+            margin: 16,
+            padding: 16,
+            backgroundColor: theme.cardBackground,
+            borderRadius: 12,
+            elevation: 3,
+        },
+        sectionTitle: {
+            color: theme.color,
+            fontSize: 18,
+            fontWeight: 'bold',
+            marginBottom: 16,
+        },
+        categoryRow: {
+            flexDirection: 'row',
+            justifyContent: 'space-between',
+            paddingVertical: 8,
+            borderBottomWidth: 1,
+            borderBottomColor: theme.borderColor,
+        },
+        categoryText: {
+            color: theme.color,
+            fontSize: 16,
+        },
+        amountText: {
+            fontSize: 16,
+            fontWeight: '500',
+        },
+        incomeText: {
+            color: '#4CAF50',
+        },
+        expenseText: {
+            color: '#F44336',
+        },
+        pickerRow: {
+            flexDirection: 'row',
+            gap: 8,
+        },
+        tabContainer: {
+            flexDirection: 'row',
+            padding: 16,
+            backgroundColor: theme.cardBackground,
+            elevation: 4,
+        },
+        tab: {
+            flex: 1,
+            padding: 12,
+            alignItems: 'center',
+        },
+        activeTab: {
+            borderBottomWidth: 2,
+            borderBottomColor: theme.appThemeColor,
+        },
+        tabText: {
+            color: theme.color,
+            fontSize: 16,
+        },
+        typeSwitch: {
+            flexDirection: 'row',
+            padding: 8,
+            backgroundColor: theme.cardBackground,
+            borderRadius: 8,
+            margin: 16,
+        },
+        typeButton: {
+            flex: 1,
+            padding: 8,
+            alignItems: 'center',
+            borderRadius: 6,
+        },
+        activeType: {
+            backgroundColor: theme.appThemeColor,
+        },
+        chartContainer: {
+            alignItems: 'center',
+            padding: 16,
+            backgroundColor: theme.cardBackground,
+            margin: 16,
+            borderRadius: 12,
+            elevation: 3,
+        },
+        legend: {
+            marginTop: 20,
+            width: '100%',
+        },
+        legendItem: {
+            flexDirection: 'row',
+            alignItems: 'center',
+            marginBottom: 8,
+            paddingHorizontal: 16,
+        },
+        legendColor: {
+            width: 12,
+            height: 12,
+            borderRadius: 6,
+            marginRight: 8,
+        },
+        legendText: {
+            color: theme.color,
+            fontSize: 14,
+            flex: 1,
+        },
+        legendPercentage: {
+            color: theme.color,
+            fontSize: 14,
+            marginLeft: 8,
+        },
+        chartTitle: {
+            color: theme.color,
+            fontSize: 18,
+            fontWeight: 'bold',
+            textAlign: 'center',
+            marginBottom: 16,
+        }
+    });
+
+    const chartConfig = {
+        backgroundGradientFrom: theme.cardBackground,
+        backgroundGradientTo: theme.cardBackground,
+        color: (opacity = 1) => `rgba(255, 255, 255, ${opacity})`,
+    };
+
+    const renderCategoryData = (data, type) => {
+        return Object.entries(data).map(([category, amount]) => (
+            <View key={category} style={styles.categoryRow}>
+                <Text style={styles.categoryText}>{category}</Text>
+                <Text style={[
+                    styles.amountText,
+                    type === 'income' ? styles.incomeText : styles.expenseText
+                ]}>
+                    ₹{amount.toFixed(2)}
+                </Text>
+            </View>
+        ));
+    };
+
+    const ChartWithLegend = ({ data, type }) => {
+        const chartData = getChartData(data, type);
+        const legendData = getLegendData(data, type);
+        const total = Object.values(data).reduce((sum, amount) => sum + amount, 0);
+
+        return (
+            <View style={styles.chartContainer}>
+                <Text style={styles.chartTitle}>
+                    {activeType === 'income' ? 'Income' : 'Expense'} Distribution
+                    {'\n'}Total: ₹{total.toFixed(2)}
+                </Text>
+                <PieChart
+                    data={chartData}
+                    donut
+                    radius={120}
+                    innerRadius={60}
+                    innerCircleColor={theme.cardBackground}
+                    centerLabelComponent={() => (
+                        <View style={{ alignItems: 'center' }}>
+                            <Text style={[styles.categoryText, { textAlign: 'center' }]}>
+                                {activeType.charAt(0).toUpperCase() + activeType.slice(1)}
+                            </Text>
+                            <Text style={[styles.categoryText, { fontSize: 12 }]}>
+                                ({activeTab === 'monthly' ? months[selectedMonth] : selectedYear})
+                            </Text>
+                        </View>
+                    )}
+                />
+                <View style={styles.legend}>
+                    {legendData.map((item, index) => (
+                        <View key={item.category} style={styles.legendItem}>
+                            <View style={[styles.legendColor, { backgroundColor: chartData[index].color }]} />
+                            <Text style={styles.legendText}>{item.category}</Text>
+                            <Text style={styles.legendPercentage}>₹{item.amount.toFixed(2)}</Text>
+                            <Text style={styles.legendPercentage}>({item.percentage}%)</Text>
+                        </View>
+                    ))}
+                </View>
+            </View>
+        );
+    };
+
+    return (
+        <ScrollView style={styles.container}>
+            <View style={styles.tabContainer}>
+                <TouchableOpacity 
+                    style={[styles.tab, activeTab === 'monthly' && styles.activeTab]}
+                    onPress={() => setActiveTab('monthly')}
+                >
+                    <Text style={styles.tabText}>Monthly</Text>
+                </TouchableOpacity>
+                <TouchableOpacity 
+                    style={[styles.tab, activeTab === 'yearly' && styles.activeTab]}
+                    onPress={() => setActiveTab('yearly')}
+                >
+                    <Text style={styles.tabText}>Yearly</Text>
+                </TouchableOpacity>
+            </View>
+
+            {activeTab === 'monthly' ? (
+                <>
+                    <View style={styles.header}>
+                        <View style={styles.pickerRow}>
+                            <View style={{ flex: 2 }}>
+                                <CustomPicker
+                                    value={selectedMonth}
+                                    options={monthOptions}
+                                    onValueChange={setSelectedMonth}
+                                    placeholder="Select Month"
+                                    visible={showMonthPicker}
+                                    setVisible={setShowMonthPicker}
+                                />
+                            </View>
+                            <View style={{ flex: 1 }}>
+                                <CustomPicker
+                                    value={selectedYear}
+                                    options={yearOptions}
+                                    onValueChange={setSelectedYear}
+                                    placeholder="Select Year"
+                                    visible={showYearPicker}
+                                    setVisible={setShowYearPicker}
+                                />
+                            </View>
+                        </View>
+                    </View>
+
+                    <View style={styles.typeSwitch}>
+                        <TouchableOpacity 
+                            style={[styles.typeButton, activeType === 'income' && styles.activeType]}
+                            onPress={() => setActiveType('income')}
+                        >
+                            <Text style={styles.tabText}>Income</Text>
+                        </TouchableOpacity>
+                        <TouchableOpacity 
+                            style={[styles.typeButton, activeType === 'expense' && styles.activeType]}
+                            onPress={() => setActiveType('expense')}
+                        >
+                            <Text style={styles.tabText}>Expense</Text>
+                        </TouchableOpacity>
+                    </View>
+
+                    <ChartWithLegend data={monthlyData[activeType]} type={activeType} />
+
+                    <View style={styles.section}>
+                        {renderCategoryData(monthlyData[activeType], activeType)}
+                    </View>
+                </>
+            ) : (
+                <>
+                    <View style={styles.header}>
+                        <CustomPicker
+                            value={selectedYear}
+                            options={yearOptions}
+                            onValueChange={setSelectedYear}
+                            placeholder="Select Year"
+                            visible={showYearPicker}
+                            setVisible={setShowYearPicker}
+                        />
+                    </View>
+
+                    <View style={styles.typeSwitch}>
+                        <TouchableOpacity 
+                            style={[styles.typeButton, activeType === 'income' && styles.activeType]}
+                            onPress={() => setActiveType('income')}
+                        >
+                            <Text style={styles.tabText}>Income</Text>
+                        </TouchableOpacity>
+                        <TouchableOpacity 
+                            style={[styles.typeButton, activeType === 'expense' && styles.activeType]}
+                            onPress={() => setActiveType('expense')}
+                        >
+                            <Text style={styles.tabText}>Expense</Text>
+                        </TouchableOpacity>
+                    </View>
+
+                    <ChartWithLegend data={yearlyData[activeType]} type={activeType} />
+
+                    <View style={styles.section}>
+                        {renderCategoryData(yearlyData[activeType], activeType)}
+                    </View>
+                </>
+            )}
+        </ScrollView>
+    );
+};
+
+export default Charts;
