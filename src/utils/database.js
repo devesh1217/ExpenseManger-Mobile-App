@@ -12,6 +12,38 @@ const db = SQLite.openDatabase(
 
 export const createTables = () => {
   db.transaction((tx) => {
+    // Drop existing tables if needed
+    tx.executeSql('DROP TABLE IF EXISTS CustomAccounts;');
+    
+    // Create new Accounts table
+    tx.executeSql(`
+      CREATE TABLE IF NOT EXISTS Accounts (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        name TEXT UNIQUE,
+        icon TEXT,
+        openingBalance REAL DEFAULT 0,
+        isDefault INTEGER DEFAULT 0,
+        isSystem INTEGER DEFAULT 0,
+        isPermanent INTEGER DEFAULT 0
+      );
+    `);
+
+    // Insert default accounts
+    const defaultAccounts = [
+      ['Cash', 'cash', 0, 1, 1, 1], // Added isPermanent flag
+      ['Bank', 'bank', 0, 0, 1, 0],
+      ['Card', 'card', 0, 0, 1, 0],
+      ['UPI', 'phone-portrait', 0, 0, 1, 0],
+      ['Savings', 'wallet', 0, 0, 1, 0]
+    ];
+
+    defaultAccounts.forEach(account => {
+      tx.executeSql(
+        'INSERT OR IGNORE INTO Accounts (name, icon, openingBalance, isDefault, isSystem, isPermanent) VALUES (?, ?, ?, ?, ?, ?);',
+        account
+      );
+    });
+
     tx.executeSql(
       `CREATE TABLE IF NOT EXISTS Transactions (
         id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -24,14 +56,6 @@ export const createTables = () => {
         date TIMESTAMP 
       );`
     );
-
-    tx.executeSql(`
-      CREATE TABLE IF NOT EXISTS CustomAccounts (
-        id INTEGER PRIMARY KEY AUTOINCREMENT,
-        name TEXT UNIQUE,
-        isDefault INTEGER DEFAULT 0
-      );
-    `);
 
     tx.executeSql(`
       CREATE TABLE IF NOT EXISTS CustomCategories (
@@ -99,7 +123,7 @@ export const getAccounts = () => {
   return new Promise((resolve, reject) => {
     db.transaction(tx => {
       tx.executeSql(
-        'SELECT * FROM CustomAccounts;',
+        'SELECT * FROM Accounts ORDER BY isSystem DESC, name ASC;',
         [],
         (_, results) => {
           const accounts = [];
@@ -114,26 +138,134 @@ export const getAccounts = () => {
   });
 };
 
-export const addCustomAccount = (name) => {
+export const addAccount = (name, icon, openingBalance) => {
   return new Promise((resolve, reject) => {
     db.transaction(tx => {
       tx.executeSql(
-        'INSERT INTO CustomAccounts (name) VALUES (?);',
-        [name],
-        (_, results) => resolve(results),
+        'INSERT INTO Accounts (name, icon, openingBalance) VALUES (?, ?, ?);',
+        [name, icon, openingBalance || 0],
+        (_, results) => {
+          // Fetch the added account to return
+          tx.executeSql(
+            'SELECT * FROM Accounts WHERE id = ?',
+            [results.insertId],
+            (_, { rows }) => resolve(rows.item(0)),
+            (_, error) => reject(error)
+          );
+        },
         (_, error) => reject(error)
       );
     });
   });
 };
 
-export const updateDefaultAccount = (accountName) => {
+export const updateAccount = (id, name, icon, openingBalance) => {
   return new Promise((resolve, reject) => {
     db.transaction(tx => {
+      // First check if account is permanent
       tx.executeSql(
-        'UPDATE CustomAccounts SET isDefault = CASE WHEN name = ? THEN 1 ELSE 0 END;',
-        [accountName],
-        (_, results) => resolve(results),
+        'SELECT isPermanent FROM Accounts WHERE id = ?',
+        [id],
+        (_, results) => {
+          if (results.rows.length === 0) {
+            reject(new Error('Account not found'));
+            return;
+          }
+
+          const account = results.rows.item(0);
+          if (account.isPermanent) {
+            reject(new Error('Cannot modify permanent account'));
+            return;
+          }
+
+          tx.executeSql(
+            'UPDATE Accounts SET name = ?, icon = ?, openingBalance = ? WHERE id = ?',
+            [name, icon, openingBalance, id],
+            (_, updateResults) => resolve(updateResults),
+            (_, error) => reject(error)
+          );
+        },
+        (_, error) => reject(error)
+      );
+    });
+  });
+};
+
+export const deleteAccount = (id) => {
+  return new Promise((resolve, reject) => {
+    db.transaction(tx => {
+      // First check if account is permanent
+      tx.executeSql(
+        'SELECT name, isPermanent FROM Accounts WHERE id = ?',
+        [id],
+        (_, results) => {
+          if (results.rows.length === 0) {
+            reject(new Error('Account not found'));
+            return;
+          }
+
+          const account = results.rows.item(0);
+          if (account.isPermanent === 1) {  // Check for numeric value
+            reject(new Error('Cannot delete permanent account'));
+            return;
+          }
+
+          // Transfer all transactions to Cash account
+          tx.executeSql(
+            'UPDATE Transactions SET account = "Cash" WHERE account = ?',
+            [account.name],
+            () => {
+              // Then delete the account
+              tx.executeSql(
+                'DELETE FROM Accounts WHERE id = ? AND isPermanent = 0',  // Add isPermanent check
+                [id],
+                (_, deleteResults) => resolve(deleteResults),
+                (_, error) => reject(error)
+              );
+            },
+            (_, error) => reject(error)
+          );
+        },
+        (_, error) => reject(error)
+      );
+    });
+  });
+};
+
+export const updateDefaultAccount = (id) => {
+  return new Promise((resolve, reject) => {
+    db.transaction(tx => {
+      // Check if the target account is permanent (Cash)
+      tx.executeSql(
+        'SELECT name, isPermanent FROM Accounts WHERE id = ?',
+        [id],
+        (_, results) => {
+          const targetAccount = results.rows.item(0);
+
+          // Get current default account
+          tx.executeSql(
+            'SELECT id, isPermanent FROM Accounts WHERE isDefault = 1',
+            [],
+            (_, defaultResults) => {
+              const currentDefault = defaultResults.rows.item(0);
+
+              // If current default is permanent (Cash) and target is not Cash, reject
+              if (currentDefault?.isPermanent === 1 && !targetAccount.isPermanent) {
+                reject(new Error('Cannot change default from Cash account'));
+                return;
+              }
+
+              // Proceed with update
+              tx.executeSql(
+                'UPDATE Accounts SET isDefault = CASE id WHEN ? THEN 1 ELSE 0 END',
+                [id],
+                (_, updateResults) => resolve(updateResults),
+                (_, error) => reject(error)
+              );
+            },
+            (_, error) => reject(error)
+          );
+        },
         (_, error) => reject(error)
       );
     });
@@ -181,10 +313,11 @@ export const getAccountBalance = (accountName) => {
     db.transaction(tx => {
       tx.executeSql(
         `SELECT 
+          (SELECT openingBalance FROM Accounts WHERE name = ?) +
           COALESCE(SUM(CASE WHEN type = 'income' THEN amount ELSE -amount END), 0) as balance
          FROM Transactions 
          WHERE account = ?;`,
-        [accountName],
+        [accountName, accountName],
         (_, results) => resolve(results.rows.item(0).balance),
         (_, error) => reject(error)
       );
@@ -195,23 +328,18 @@ export const getAccountBalance = (accountName) => {
 export const getAllAccountBalances = () => {
   return new Promise((resolve, reject) => {
     db.transaction(tx => {
-      // First get all unique accounts from transactions
       tx.executeSql(
-        `SELECT DISTINCT account FROM Transactions
-         UNION
-         SELECT name as account FROM CustomAccounts;`,
+        `SELECT a.*, 
+          (a.openingBalance + COALESCE(SUM(CASE WHEN t.type = 'income' THEN t.amount ELSE -t.amount END), 0)) as balance
+         FROM Accounts a
+         LEFT JOIN Transactions t ON a.name = t.account
+         GROUP BY a.id
+         ORDER BY a.isSystem DESC, a.name ASC;`,
         [],
-        async (_, results) => {
+        (_, results) => {
           const accounts = [];
           for (let i = 0; i < results.rows.length; i++) {
-            const account = results.rows.item(i).account;
-            const balance = await getAccountBalance(account);
-            const isCustom = await isCustomAccount(account);
-            accounts.push({
-              name: account,
-              balance,
-              isCustom
-            });
+            accounts.push(results.rows.item(i));
           }
           resolve(accounts);
         },
@@ -225,7 +353,7 @@ export const isCustomAccount = (accountName) => {
   return new Promise((resolve, reject) => {
     db.transaction(tx => {
       tx.executeSql(
-        'SELECT 1 FROM CustomAccounts WHERE name = ?;',
+        'SELECT 1 FROM Accounts WHERE name = ?;',
         [accountName],
         (_, results) => resolve(results.rows.length > 0),
         (_, error) => reject(error)
