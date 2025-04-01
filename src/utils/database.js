@@ -129,23 +129,46 @@ export const fetchTransactions = (type, date, callback) => {
   });
 };
 
-export const fetchMonthlyTransactions = (type, date, callback) => {
-  db.transaction((tx) => {
-    tx.executeSql(
-      `SELECT * FROM Transactions WHERE type = ? AND strftime('%Y-%m', date) = strftime('%Y-%m', ?);`,
-      [type, date],
-      (_, results) => {
-        const rows = results.rows;
-        let transactions = [];
-        for (let i = 0; i < rows.length; i++) {
-          transactions.push(rows.item(i));
-        }
-        callback(transactions);
-      },
-      (error) => {
-        console.error('Error fetching transactions:', error); // Log errors if any
-      }
-    );
+export const fetchMonthlyTransactions = (type, date) => {
+  return new Promise((resolve, reject) => {
+    db.transaction((tx) => {
+      tx.executeSql(
+        `SELECT * FROM Transactions 
+         WHERE type = ? 
+         AND strftime('%Y-%m', date) = strftime('%Y-%m', ?);`,
+        [type, date],
+        (_, results) => {
+          const transactions = [];
+          for (let i = 0; i < results.rows.length; i++) {
+            transactions.push(results.rows.item(i));
+          }
+          resolve(transactions);
+        },
+        (_, error) => reject(error)
+      );
+    });
+  });
+};
+
+// Add new function for yearly transactions
+export const fetchYearlyTransactions = (type, year) => {
+  return new Promise((resolve, reject) => {
+    db.transaction((tx) => {
+      tx.executeSql(
+        `SELECT * FROM Transactions 
+         WHERE type = ? 
+         AND strftime('%Y', date) = ?;`,
+        [type, year.toString()],
+        (_, results) => {
+          const transactions = [];
+          for (let i = 0; i < results.rows.length; i++) {
+            transactions.push(results.rows.item(i));
+          }
+          resolve(transactions);
+        },
+        (_, error) => reject(error)
+      );
+    });
   });
 };
 

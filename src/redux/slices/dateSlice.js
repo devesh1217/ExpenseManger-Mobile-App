@@ -16,8 +16,11 @@ const dateSlice = createSlice({
         setValue: (state, action) => {
             state.value = action.payload;
         },
+        setCounter: (state, action) => {
+            state.value = action.payload;
+        }
     },
 });
 
-export const { increment, decrement, setValue } = dateSlice.actions;
+export const { increment, decrement, setValue, setCounter } = dateSlice.actions;
 export default dateSlice.reducer;

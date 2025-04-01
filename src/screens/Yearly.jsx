@@ -5,7 +5,7 @@ import MaterialIcons from 'react-native-vector-icons/MaterialIcons';
 import { fetchMonthlyTransactions } from '../utils/database';
 import CustomPicker from '../components/common/CustomPicker';
 
-const Yearly = () => {
+const Yearly = ({ navigation }) => {
     const { theme } = useTheme();
     const [selectedYear, setSelectedYear] = useState(new Date().getFullYear());
     const [showYearPicker, setShowYearPicker] = useState(false);
@@ -21,41 +21,39 @@ const Yearly = () => {
         'July', 'August', 'September', 'October', 'November', 'December'
     ];
 
+    const fetchYearData = async () => {
+        try {
+            const monthlyTotals = await Promise.all(
+                months.map(async (month, index) => {
+                    const monthNum = String(index + 1).padStart(2, '0');
+                    const dateString = `${selectedYear}-${monthNum}-01`;
+
+                    const [incomeTransactions, expenseTransactions] = await Promise.all([
+                        fetchMonthlyTransactions('income', dateString),
+                        fetchMonthlyTransactions('expense', dateString)
+                    ]);
+
+                    const income = incomeTransactions.reduce((sum, t) => sum + parseFloat(t.amount), 0);
+                    const expense = expenseTransactions.reduce((sum, t) => sum + parseFloat(t.amount), 0);
+
+                    return {
+                        month,
+                        income,
+                        expense,
+                        balance: income - expense
+                    };
+                })
+            );
+
+            setMonthlyData(monthlyTotals);
+        } catch (error) {
+            console.error('Error fetching yearly data:', error);
+        }
+    };
+
     useEffect(() => {
         fetchYearData();
     }, [selectedYear]);
-
-    const fetchYearData = async () => {
-        const monthlyTotals = await Promise.all(
-            months.map(async (month, index) => {
-                const monthNum = String(index + 1).padStart(2, '0');
-                const dateString = `${selectedYear}-${monthNum}-01`;
-                
-                const income = await new Promise(resolve => {
-                    fetchMonthlyTransactions('income', dateString, (data) => {
-                        const total = data.reduce((sum, item) => sum + parseFloat(item.amount), 0);
-                        resolve(total);
-                    });
-                });
-
-                const expense = await new Promise(resolve => {
-                    fetchMonthlyTransactions('expense', dateString, (data) => {
-                        const total = data.reduce((sum, item) => sum + parseFloat(item.amount), 0);
-                        resolve(total);
-                    });
-                });
-
-                return {
-                    month,
-                    income,
-                    expense,
-                    balance: income - expense
-                };
-            })
-        );
-
-        setMonthlyData(monthlyTotals);
-    };
 
     const yearOptions = years.map(year => ({
         label: year.toString(),
@@ -248,8 +246,14 @@ const Yearly = () => {
                 data={monthlyData}
                 numColumns={2}
                 keyExtractor={item => item.month}
-                renderItem={({ item }) => (
-                    <View style={styles.monthBox}>
+                renderItem={({ item, index }) => (
+                    <TouchableOpacity 
+                        style={styles.monthBox}
+                        onPress={() => {
+                            const date = new Date(selectedYear, index, 1);
+                            navigation.navigate('Monthly', { selectedDate: date });
+                        }}
+                    >
                         <View style={styles.monthCard}>
                             <Text style={styles.monthHeader}>{item.month}</Text>
                             <View style={styles.row}>
@@ -268,7 +272,7 @@ const Yearly = () => {
                                 ]}>₹{item.balance.toFixed(2)}</Text>
                             </View>
                         </View>
-                    </View>
+                    </TouchableOpacity>
                 )}
             />
         </View>

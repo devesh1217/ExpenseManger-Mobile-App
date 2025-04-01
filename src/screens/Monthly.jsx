@@ -5,10 +5,18 @@ import MaterialIcons from 'react-native-vector-icons/MaterialIcons';
 import { useTheme } from '../hooks/ThemeContext';
 import CustomPicker from '../components/common/CustomPicker';
 import TransectionEntry from '../components/home/Transections/TransectionEntry';
+import { useFocusEffect } from '@react-navigation/native';
 
-const Monthly = () => {
+const Monthly = ({ navigation, route }) => {
     const { theme } = useTheme();
-    const [selectedDate, setSelectedDate] = useState(new Date());
+    const [selectedDate, setSelectedDate] = useState(() => {
+        if (route.params?.selectedDate) {
+            const date = new Date(route.params.selectedDate);
+            // Ensure valid date by checking if it's not NaN
+            return isNaN(date.getTime()) ? new Date() : date;
+        }
+        return new Date();
+    });
     const [transactionsByDate, setTransactionsByDate] = useState({});
     const [showMonthPicker, setShowMonthPicker] = useState(false);
     const [showYearPicker, setShowYearPicker] = useState(false);
@@ -187,37 +195,41 @@ const Monthly = () => {
     );
 
     useEffect(() => {
-        const year = selectedDate.getFullYear();
-        const month = String(selectedDate.getMonth() + 1).padStart(2, '0');
+        const fetchData = async () => {
+            try {
+                const year = selectedDate.getFullYear();
+                const month = String(selectedDate.getMonth() + 1).padStart(2, '0');
+                const dateString = `${year}-${month}-01`;
 
-        const fetchData = async (year, month) => {
-            let allTransactions = [];
-            const dateString = `${year}-${month}-01`;
-            const income = await new Promise(resolve => {
-                fetchMonthlyTransactions('income', dateString, (data) => resolve(data));
-            });
-            const expense = await new Promise(resolve => {
-                fetchMonthlyTransactions('expense', dateString, (data) => resolve(data));
-            });
+                const [incomeTransactions, expenseTransactions] = await Promise.all([
+                    fetchMonthlyTransactions('income', dateString),
+                    fetchMonthlyTransactions('expense', dateString)
+                ]);
 
-            allTransactions = [...income, ...expense];
-            allTransactions.sort((a, b) => new Date(a.date) - new Date(b.date));
+                const allTransactions = [...incomeTransactions, ...expenseTransactions];
+                allTransactions.sort((a, b) => new Date(b.date) - new Date(a.date));
 
-            // Group transactions by date
-            const groupedTransactions = allTransactions.reduce((acc, transaction) => {
-                const date = transaction.date;
-                if (!acc[date]) {
-                    acc[date] = [];
-                }
-                acc[date].push(transaction);
-                return acc;
-            }, {});
-            setTransactionsByDate(groupedTransactions);
-            setSummary(calculateSummary(allTransactions));
+                // Group transactions by date
+                const groupedTransactions = allTransactions.reduce((acc, transaction) => {
+                    const date = transaction.date;
+                    if (!acc[date]) {
+                        acc[date] = [];
+                    }
+                    acc[date].push(transaction);
+                    return acc;
+                }, {});
+
+                setTransactionsByDate(groupedTransactions);
+                setSummary({
+                    income: incomeTransactions.reduce((sum, t) => sum + parseFloat(t.amount), 0),
+                    expense: expenseTransactions.reduce((sum, t) => sum + parseFloat(t.amount), 0)
+                });
+            } catch (error) {
+                console.error('Error fetching monthly data:', error);
+            }
         };
 
-        fetchData(year, month);
-
+        fetchData();
     }, [selectedDate]);
 
     const calculateSummary = (transactions) => {
@@ -246,6 +258,22 @@ const Monthly = () => {
         value: year,
         icon: 'calendar'
     }));
+
+    // Add useFocusEffect to reload data when screen is focused
+    useFocusEffect(
+        React.useCallback(() => {
+            if (route.params?.selectedDate) {
+                const newDate = new Date(route.params.selectedDate);
+                // Only update if the date is different
+                if (selectedDate.getTime() !== newDate.getTime()) {
+                    setSelectedDate(newDate);
+                }
+            }
+            return () => {
+                // Cleanup if needed
+            };
+        }, [route.params?.selectedDate])
+    );
 
     return (
         <View style={styles.container}>
@@ -294,12 +322,19 @@ const Monthly = () => {
 
             <ScrollView style={styles.scrollView}>
                 {Object.entries(transactionsByDate).map(([date, transactions]) => (
-                    <View key={date} style={styles.dateGroup}>
-                        <Text style={styles.dateHeader}>{date}</Text>
-                        {transactions.map((transaction) => (
-                            <TransectionEntry key={transaction.id} entry={transaction} />
-                        ))}
-                    </View>
+                    <TouchableOpacity 
+                        key={`${date}_${selectedDate.getTime()}`} // Add unique key combining date and selected month
+                        onPress={() => {
+                            navigation.navigate('Home', { targetDate: date });  // Pass the date string directly
+                        }}
+                    >
+                        <View style={styles.dateGroup}>
+                            <Text style={styles.dateHeader}>{date}</Text>
+                            {transactions.map((transaction) => (
+                                <TransectionEntry key={transaction.id} entry={transaction} />
+                            ))}
+                        </View>
+                    </TouchableOpacity>
                 ))}
             </ScrollView>
         </View>

@@ -5,13 +5,35 @@ import TransectionsContainer from '../components/home/Transections/TransectionsC
 import DateBar from '../components/home/DateBar/DateBar';
 import { useTheme } from '../hooks/ThemeContext';
 import Icon from 'react-native-vector-icons/Ionicons';  // Replace Expo icons
-import { increment, decrement } from '../redux/slices/dateSlice';
-import { useDispatch } from 'react-redux';
+import { increment, decrement, setCounter } from '../redux/slices/dateSlice';
+import { useDispatch, useSelector } from 'react-redux';
+import { useRoute } from '@react-navigation/native';
+import { addDays } from 'date-fns';
 
 const HomeContainer = () => {
     const { theme } = useTheme();
     const [showModal, setShowModal] = useState(false);
+    const counter = useSelector(state => state.date.value)
     const dispatch = useDispatch();
+    const route = useRoute();
+
+    useEffect(() => {
+        if (route.params?.targetDate) {
+            const targetDate = new Date(route.params.targetDate);
+            const today = new Date();
+            
+            // Reset both dates to start of day
+            today.setHours(0, 0, 0, 0);
+            targetDate.setHours(0, 0, 0, 0);
+            
+            // Calculate difference in days
+            const diffTime = targetDate.getTime() - today.getTime();
+            const diffDays = Math.round(diffTime / (1000 * 60 * 60 * 24));
+            
+            // Set counter directly to the difference in days
+            dispatch(setCounter(diffDays));
+        }
+    }, [route.params?.targetDate]);
 
     const panResponder = React.useMemo(
         () =>
