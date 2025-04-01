@@ -6,7 +6,6 @@ import { useTheme } from '../../../hooks/ThemeContext';
 import { useSelector, useDispatch } from 'react-redux';
 import { addIncome } from '../../../../src/redux/slices/transactionSlice';
 import { Picker } from '@react-native-picker/picker';
-import { accountOptions, categoryOptions } from '../../../constants/formOptions';
 import CustomPicker from '../../common/CustomPicker';
 import { getAccounts, getCategories } from '../../../../src/utils/database';
 
@@ -89,12 +88,12 @@ const IncomeForm = ({ onClose }) => {
         setCustomAccounts(accounts.map(acc => ({
             label: acc.name,
             value: acc.name,
-            icon: 'wallet-outline' // default icon for custom accounts
+            icon: acc.icon || 'wallet-outline'
         })));
         setCustomCategories(categories.income.map(cat => ({
             label: cat.name,
             value: cat.name,
-            icon: 'add-circle-outline' // default icon for custom income categories
+            icon: cat.icon || 'add-circle-outline'
         })));
     };
 
@@ -149,7 +148,7 @@ const IncomeForm = ({ onClose }) => {
             <View style={[styles.pickerContainer]}>
                 <CustomPicker
                     value={incomeForm.account}
-                    options={[...accountOptions, ...customAccounts]}
+                    options={customAccounts}
                     onValueChange={(value) => setIncomeForm({ ...incomeForm, account: value })}
                     placeholder="Select Account"
                     visible={showAccountPicker}
@@ -158,7 +157,7 @@ const IncomeForm = ({ onClose }) => {
 
                 <CustomPicker
                     value={incomeForm.category}
-                    options={[...categoryOptions.income, ...customCategories]}
+                    options={customCategories}
                     onValueChange={(value) => setIncomeForm({ ...incomeForm, category: value })}
                     placeholder="Select Category"
                     visible={showCategoryPicker}

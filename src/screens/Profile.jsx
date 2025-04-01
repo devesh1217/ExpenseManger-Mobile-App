@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { View, Text, StyleSheet, TouchableOpacity, TextInput, ScrollView, Switch, Modal, FlatList, Alert } from 'react-native';
 import { useTheme } from '../hooks/ThemeContext';
 import Icon from 'react-native-vector-icons/Ionicons';
-import { getAccounts, addCustomAccount, getCategories, addCustomCategory, getAccountBalance, updateDefaultAccount, getAllAccountBalances, updateAccount, addAccount, deleteAccount } from '../utils/database';
+import { getAccounts, addCustomAccount, getCategories, addCustomCategory, getAccountBalance, updateDefaultAccount, getAllAccountBalances, updateAccount, addAccount, deleteAccount, updateCategory, addCategory, deleteCategory } from '../utils/database';
 import { accountIcons } from '../constants/iconOptions';
 
 const Profile = () => {
@@ -23,6 +23,13 @@ const Profile = () => {
         icon: 'wallet-outline',
         openingBalance: '0'
     });
+    const [categoryForm, setCategoryForm] = useState({
+        name: '',
+        icon: 'add-circle-outline',
+        type: 'income'
+    });
+    const [showCategoryModal, setShowCategoryModal] = useState(false);
+    const [editingCategory, setEditingCategory] = useState(null);
 
     useEffect(() => {
         loadData();
@@ -122,6 +129,63 @@ const Profile = () => {
         } catch (error) {
             Alert.alert('Error', error.message || 'Failed to update default account');
         }
+    };
+
+    const handleSaveCategory = async () => {
+        try {
+            if (!categoryForm.name.trim()) {
+                Alert.alert('Error', 'Category name is required');
+                return;
+            }
+
+            if (editingCategory) {
+                await updateCategory(
+                    editingCategory.id,
+                    categoryForm.name,
+                    categoryForm.icon
+                );
+            } else {
+                await addCategory(
+                    categoryForm.name,
+                    categoryForm.icon,
+                    categoryForm.type
+                );
+            }
+            setShowCategoryModal(false);
+            setEditingCategory(null);
+            setCategoryForm({ name: '', icon: 'add-circle-outline', type: categoryType });
+            loadData();
+        } catch (error) {
+            Alert.alert('Error', error.message || 'Failed to save category');
+        }
+    };
+
+    const handleDeleteCategory = (category) => {
+        if (category.isPermanent === 1) {
+            Alert.alert('Error', 'This category cannot be deleted');
+            return;
+        }
+
+        Alert.alert(
+            'Confirm Delete',
+            'Are you sure you want to delete this category? All transactions will be moved to Others category.',
+            [
+                { text: 'Cancel', style: 'cancel' },
+                {
+                    text: 'Delete',
+                    style: 'destructive',
+                    onPress: async () => {
+                        try {
+                            await deleteCategory(category.id);
+                            loadData();
+                            Alert.alert('Success', 'Category deleted and transactions updated');
+                        } catch (error) {
+                            Alert.alert('Error', error.message || 'Failed to delete category');
+                        }
+                    },
+                },
+            ]
+        );
     };
 
     const styles = StyleSheet.create({
@@ -358,7 +422,11 @@ const Profile = () => {
 
                         <TouchableOpacity 
                             style={styles.iconSelector}
-                            onPress={() => setShowIconPicker(true)}
+                            onPress={() => {
+                                setShowIconPicker(true);
+                                // Store which form is being edited (account or category)
+                                window.currentEditingForm = 'account';
+                            }}
                         >
                             <View style={styles.iconSelectorContent}>
                                 <Icon name={accountForm.icon} size={24} color={theme.color} />
@@ -401,10 +469,14 @@ const Profile = () => {
                                 <TouchableOpacity
                                     style={[
                                         styles.iconItem,
-                                        accountForm.icon === item && styles.selectedIcon
+                                        ((window.currentEditingForm === 'category' ? categoryForm.icon : accountForm.icon) === item) && styles.selectedIcon
                                     ]}
                                     onPress={() => {
-                                        setAccountForm({...accountForm, icon: item});
+                                        if (window.currentEditingForm === 'category') {
+                                            setCategoryForm({...categoryForm, icon: item});
+                                        } else {
+                                            setAccountForm({...accountForm, icon: item});
+                                        }
                                         setShowIconPicker(false);
                                     }}
                                 >
@@ -422,44 +494,160 @@ const Profile = () => {
                 <View style={{ flexDirection: 'row', marginBottom: 8 }}>
                     <TouchableOpacity
                         style={[styles.addButton, { flex: 1, marginRight: 8, backgroundColor: categoryType === 'income' ? theme.appThemeColor : theme.cardBackground }]}
-                        onPress={() => setCategoryType('income')}
+                        onPress={() => {
+                            setCategoryType('income');
+                            setCategoryForm(prev => ({ ...prev, type: 'income' }));
+                        }}
                     >
                         <Text style={styles.buttonText}>Income</Text>
                     </TouchableOpacity>
                     <TouchableOpacity
                         style={[styles.addButton, { flex: 1, backgroundColor: categoryType === 'expense' ? theme.appThemeColor : theme.cardBackground }]}
-                        onPress={() => setCategoryType('expense')}
+                        onPress={() => {
+                            setCategoryType('expense');
+                            setCategoryForm(prev => ({ ...prev, type: 'expense' }));
+                        }}
                     >
                         <Text style={styles.buttonText}>Expense</Text>
                     </TouchableOpacity>
                 </View>
-                
-                <TextInput
-                    style={styles.input}
-                    placeholder="Add new category"
-                    placeholderTextColor={theme.color + '80'}
-                    value={newCategory}
-                    onChangeText={setNewCategory}
-                />
+
                 <TouchableOpacity 
                     style={styles.addButton}
-                    onPress={async () => {
-                        if (newCategory) {
-                            await addCustomCategory(newCategory, categoryType);
-                            setNewCategory('');
-                            loadData();
-                        }
+                    onPress={() => {
+                        setCategoryForm({ name: '', icon: 'add-circle-outline', type: categoryType });
+                        setEditingCategory(null);
+                        setShowCategoryModal(true);
                     }}
                 >
                     <Text style={styles.buttonText}>Add Category</Text>
                 </TouchableOpacity>
 
-                {categories[categoryType].map(category => (
+                {categories[categoryType]?.map((category) => (
                     <View key={category.id} style={styles.item}>
-                        <Text style={styles.itemText}>{category.name}</Text>
+                        <View style={styles.accountInfo}>
+                            <Icon name={category.icon} size={24} color={theme.color} />
+                            <Text style={styles.itemText}>{category.name}</Text>
+                        </View>
+                        {category.isPermanent !== 1 && (
+                            <View style={styles.accountActions}>
+                                <TouchableOpacity
+                                    onPress={() => {
+                                        setEditingCategory(category);
+                                        setCategoryForm({
+                                            name: category.name,
+                                            icon: category.icon,
+                                            type: category.type
+                                        });
+                                        setShowCategoryModal(true);
+                                    }}
+                                >
+                                    <Icon name="create-outline" size={24} color={theme.color} />
+                                </TouchableOpacity>
+                                <TouchableOpacity onPress={() => handleDeleteCategory(category)}>
+                                    <Icon name="trash-outline" size={24} color="#EF5350" />
+                                </TouchableOpacity>
+                            </View>
+                        )}
                     </View>
                 ))}
             </View>
+
+            {/* Add Category Modal */}
+            <Modal
+                visible={showCategoryModal}
+                transparent={true}
+                animationType="slide"
+                onRequestClose={() => setShowCategoryModal(false)}
+            >
+                <View style={styles.modalOverlay}>
+                    <View style={styles.modalContent}>
+                        <View style={styles.modalHeader}>
+                            <Text style={styles.modalTitle}>
+                                {editingCategory ? 'Edit Category' : 'New Category'}
+                            </Text>
+                            <TouchableOpacity onPress={() => setShowCategoryModal(false)}>
+                                <Icon name="close" size={24} color={theme.color} />
+                            </TouchableOpacity>
+                        </View>
+
+                        <TextInput
+                            style={styles.input}
+                            placeholder="Category Name"
+                            placeholderTextColor={theme.color + '80'}
+                            value={categoryForm.name}
+                            onChangeText={(text) => setCategoryForm({...categoryForm, name: text})}
+                        />
+
+                        <TouchableOpacity 
+                            style={styles.iconSelector}
+                            onPress={() => {
+                                setShowIconPicker(true);
+                                // Store which form is being edited (account or category)
+                                window.currentEditingForm = 'category';
+                            }}
+                        >
+                            <View style={styles.iconSelectorContent}>
+                                <Icon name={categoryForm.icon} size={24} color={theme.color} />
+                                <Text style={[styles.itemText, { marginLeft: 8 }]}>Select Icon</Text>
+                            </View>
+                        </TouchableOpacity>
+
+                        <View style={styles.buttonContainer}>
+                            <TouchableOpacity 
+                                style={[styles.addButton, { flex: 1 }]}
+                                onPress={handleSaveCategory}
+                            >
+                                <Text style={styles.buttonText}>
+                                    {editingCategory ? 'Update' : 'Save'}
+                                </Text>
+                            </TouchableOpacity>
+                        </View>
+                    </View>
+                </View>
+            </Modal>
+
+            {/* Icon Picker Modal */}
+            <Modal
+                visible={showIconPicker}
+                transparent={true}
+                animationType="slide"
+                onRequestClose={() => setShowIconPicker(false)}
+            >
+                <View style={styles.modalOverlay}>
+                    <View style={styles.modalContent}>
+                        <View style={styles.modalHeader}>
+                            <Text style={styles.modalTitle}>Select Icon</Text>
+                            <TouchableOpacity onPress={() => setShowIconPicker(false)}>
+                                <Icon name="close" size={24} color={theme.color} />
+                            </TouchableOpacity>
+                        </View>
+                        <FlatList
+                            data={accountIcons}
+                            numColumns={4}
+                            renderItem={({ item }) => (
+                                <TouchableOpacity
+                                    style={[
+                                        styles.iconItem,
+                                        ((window.currentEditingForm === 'category' ? categoryForm.icon : accountForm.icon) === item) && styles.selectedIcon
+                                    ]}
+                                    onPress={() => {
+                                        if (window.currentEditingForm === 'category') {
+                                            setCategoryForm({...categoryForm, icon: item});
+                                        } else {
+                                            setAccountForm({...accountForm, icon: item});
+                                        }
+                                        setShowIconPicker(false);
+                                    }}
+                                >
+                                    <Icon name={item} size={32} color={theme.color} />
+                                </TouchableOpacity>
+                            )}
+                            keyExtractor={item => item}
+                        />
+                    </View>
+                </View>
+            </Modal>
         </ScrollView>
     );
 };

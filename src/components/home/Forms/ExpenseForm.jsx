@@ -27,12 +27,12 @@ const ExpenseForm = ({ onClose }) => {
         setCustomAccounts(accounts.map(acc => ({
             label: acc.name,
             value: acc.name,
-            icon: 'wallet-outline' // default icon for custom accounts
+            icon: acc.icon || 'wallet-outline'
         })));
         setCustomCategories(categories.expense.map(cat => ({
             label: cat.name,
             value: cat.name,
-            icon: 'remove-circle-outline' // default icon for custom expense categories
+            icon: cat.icon || 'remove-circle-outline'
         })));
     };
 
@@ -142,7 +142,7 @@ const ExpenseForm = ({ onClose }) => {
 
                 <CustomPicker
                     value={expenseForm.account}
-                    options={[...accountOptions, ...customAccounts]}
+                    options={customAccounts}
                     onValueChange={(value) => setExpenseForm({ ...expenseForm, account: value })}
                     placeholder="Select Account"
                     visible={showAccountPicker}
@@ -151,7 +151,7 @@ const ExpenseForm = ({ onClose }) => {
 
                 <CustomPicker
                     value={expenseForm.category}
-                    options={[...categoryOptions.expense, ...customCategories]}
+                    options={customCategories}
                     onValueChange={(value) => setExpenseForm({ ...expenseForm, category: value })}
                     placeholder="Select Category"
                     visible={showCategoryPicker}

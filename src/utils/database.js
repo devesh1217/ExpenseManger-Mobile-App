@@ -58,13 +58,43 @@ export const createTables = () => {
     );
 
     tx.executeSql(`
-      CREATE TABLE IF NOT EXISTS CustomCategories (
+      CREATE TABLE IF NOT EXISTS Categories (
         id INTEGER PRIMARY KEY AUTOINCREMENT,
         name TEXT,
+        icon TEXT,
         type TEXT,
-        UNIQUE(name, type)
+        isSystem INTEGER DEFAULT 0,
+        isPermanent INTEGER DEFAULT 0
       );
     `);
+
+    // Insert default income categories with Others first (permanent)
+    const defaultIncomeCategories = [
+      ['Others', 'add-circle', 'income', 1, 1],  // Permanent default category
+      ['Salary', 'cash', 'income', 1, 0],
+      ['Business', 'business', 'income', 1, 0],
+      ['Investment', 'trending-up', 'income', 1, 0],
+      ['Freelance', 'laptop', 'income', 1, 0]
+    ];
+
+    // Update the defaultExpenseCategories array in createTables function
+    const defaultExpenseCategories = [
+      ['Others', 'remove-circle', 'expense', 1, 1],  // Permanent default category
+      ['Food', 'restaurant', 'expense', 1, 0],
+      ['Transport', 'car', 'expense', 1, 0],
+      ['Shopping', 'cart', 'expense', 1, 0],
+      ['Bills', 'receipt', 'expense', 1, 0],
+      ['Entertainment', 'game-controller', 'expense', 1, 0],
+      ['Health', 'medical', 'expense', 1, 0]
+    ];
+
+    // Insert all default categories
+    [...defaultIncomeCategories, ...defaultExpenseCategories].forEach(category => {
+      tx.executeSql(
+        'INSERT OR IGNORE INTO Categories (name, icon, type, isSystem, isPermanent) VALUES (?, ?, ?, ?, ?);',
+        category
+      );
+    });
   });
 };
 
@@ -276,7 +306,7 @@ export const getCategories = () => {
   return new Promise((resolve, reject) => {
     db.transaction(tx => {
       tx.executeSql(
-        'SELECT * FROM CustomCategories;',
+        'SELECT * FROM Categories ORDER BY type, isSystem DESC, name ASC;',
         [],
         (_, results) => {
           const categories = {
@@ -284,10 +314,100 @@ export const getCategories = () => {
             expense: []
           };
           for (let i = 0; i < results.rows.length; i++) {
-            const item = results.rows.item(i);
-            categories[item.type].push(item);
+            const category = results.rows.item(i);
+            categories[category.type].push(category);
           }
           resolve(categories);
+        },
+        (_, error) => reject(error)
+      );
+    });
+  });
+};
+
+export const addCategory = (name, icon, type) => {
+  return new Promise((resolve, reject) => {
+    db.transaction(tx => {
+      tx.executeSql(
+        'INSERT INTO Categories (name, icon, type) VALUES (?, ?, ?);',
+        [name, icon, type],
+        (_, results) => {
+          tx.executeSql(
+            'SELECT * FROM Categories WHERE id = ?',
+            [results.insertId],
+            (_, { rows }) => resolve(rows.item(0)),
+            (_, error) => reject(error)
+          );
+        },
+        (_, error) => reject(error)
+      );
+    });
+  });
+};
+
+export const updateCategory = (id, name, icon) => {
+  return new Promise((resolve, reject) => {
+    db.transaction(tx => {
+      tx.executeSql(
+        'SELECT isPermanent FROM Categories WHERE id = ?',
+        [id],
+        (_, results) => {
+          if (results.rows.length === 0) {
+            reject(new Error('Category not found'));
+            return;
+          }
+
+          const category = results.rows.item(0);
+          if (category.isPermanent === 1) {
+            reject(new Error('Cannot modify permanent category'));
+            return;
+          }
+
+          tx.executeSql(
+            'UPDATE Categories SET name = ?, icon = ? WHERE id = ?',
+            [name, icon, id],
+            (_, updateResults) => resolve(updateResults),
+            (_, error) => reject(error)
+          );
+        },
+        (_, error) => reject(error)
+      );
+    });
+  });
+};
+
+export const deleteCategory = (id) => {
+  return new Promise((resolve, reject) => {
+    db.transaction(tx => {
+      tx.executeSql(
+        'SELECT name, type, isPermanent FROM Categories WHERE id = ?',
+        [id],
+        (_, results) => {
+          if (results.rows.length === 0) {
+            reject(new Error('Category not found'));
+            return;
+          }
+
+          const category = results.rows.item(0);
+          if (category.isPermanent === 1) {
+            reject(new Error('Cannot delete permanent category'));
+            return;
+          }
+
+          // Transfer transactions to 'Others' category of same type
+          tx.executeSql(
+            'UPDATE Transactions SET category = "Others" WHERE category = ?',
+            [category.name],
+            () => {
+              tx.executeSql(
+                'DELETE FROM Categories WHERE id = ? AND isPermanent = 0',
+                [id],
+                (_, deleteResults) => resolve(deleteResults),
+                (_, error) => reject(error)
+              );
+            },
+            (_, error) => reject(error)
+          );
         },
         (_, error) => reject(error)
       );
