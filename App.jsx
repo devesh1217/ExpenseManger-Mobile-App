@@ -16,6 +16,7 @@ import Yearly from './src/screens/Yearly';
 import Charts from './src/screens/Charts';
 import Ionicons from 'react-native-vector-icons/Ionicons';
 import Profile from './src/screens/Profile';
+import Search from './src/screens/Search';
 
 const Tab = createBottomTabNavigator();
 
@@ -67,6 +68,8 @@ const AppContent = () => {
                 iconName = focused ? 'pie-chart' : 'pie-chart-outline';
               } else if (route.name === 'Profile') {
                 iconName = focused ? 'person' : 'person-outline';
+              } else if (route.name === 'Search') {
+                iconName = focused ? 'search' : 'search-outline';
               }
 
               return <Ionicons name={iconName} size={size} color={color} />;
@@ -84,6 +87,7 @@ const AppContent = () => {
           <Tab.Screen name="Monthly" component={Monthly} />
           <Tab.Screen name="Yearly" component={Yearly} />
           <Tab.Screen name="Charts" component={Charts} />
+          <Tab.Screen name="Search" component={Search} />
           <Tab.Screen name="Profile" component={Profile} />
         </Tab.Navigator>
       </NavigationContainer>

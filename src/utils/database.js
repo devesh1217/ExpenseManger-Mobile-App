@@ -539,3 +539,95 @@ export const deleteTransaction = (id) => {
     });
   });
 };
+
+export const fetchTransactionsByCategory = (type, category, date, isMonthly = true) => {
+  return new Promise((resolve, reject) => {
+    db.transaction(tx => {
+      const dateFilter = isMonthly ? 
+        "strftime('%Y-%m', date) = strftime('%Y-%m', ?)" :
+        "strftime('%Y', date) = ?";
+      
+      tx.executeSql(
+        `SELECT * FROM Transactions 
+         WHERE type = ? 
+         AND category = ?
+         AND ${dateFilter}
+         ORDER BY date DESC;`,
+        [type, category, date],
+        (_, results) => {
+          const transactions = [];
+          for (let i = 0; i < results.rows.length; i++) {
+            transactions.push(results.rows.item(i));
+          }
+          resolve(transactions);
+        },
+        (_, error) => reject(error)
+      );
+    });
+  });
+};
+
+export const fetchTransactionsByFilters = (query, filters) => {
+  return new Promise((resolve, reject) => {
+    db.transaction(tx => {
+      let conditions = [];
+      let params = [];
+
+      // Text search
+      if (query) {
+        conditions.push('(title LIKE ? OR description LIKE ? OR category LIKE ? OR account LIKE ?)');
+        const searchTerm = `%${query}%`;
+        params.push(searchTerm, searchTerm, searchTerm, searchTerm);
+      }
+
+      // Type filter
+      if (filters.type !== 'all') {
+        conditions.push('type = ?');
+        params.push(filters.type);
+      }
+
+      // Date range filter
+      if (filters.startDate) {
+        conditions.push('date >= ?');
+        params.push(filters.startDate.toISOString().split('T')[0]);
+      }
+      if (filters.endDate) {
+        conditions.push('date <= ?');
+        params.push(filters.endDate.toISOString().split('T')[0]);
+      }
+
+      // Account filter
+      if (filters.account) {
+        conditions.push('account = ?');
+        params.push(filters.account);
+      }
+
+      // Amount range filter
+      if (filters.minAmount) {
+        conditions.push('amount >= ?');
+        params.push(parseFloat(filters.minAmount));
+      }
+      if (filters.maxAmount) {
+        conditions.push('amount <= ?');
+        params.push(parseFloat(filters.maxAmount));
+      }
+
+      const whereClause = conditions.length > 0 
+        ? `WHERE ${conditions.join(' AND ')}` 
+        : '';
+
+      tx.executeSql(
+        `SELECT * FROM Transactions ${whereClause} ORDER BY date DESC;`,
+        params,
+        (_, results) => {
+          const transactions = [];
+          for (let i = 0; i < results.rows.length; i++) {
+            transactions.push(results.rows.item(i));
+          }
+          resolve(transactions);
+        },
+        (_, error) => reject(error)
+      );
+    });
+  });
+};

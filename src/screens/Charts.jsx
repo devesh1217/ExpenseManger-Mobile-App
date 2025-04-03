@@ -1,11 +1,12 @@
-import { View, Text, StyleSheet, ScrollView, TouchableOpacity, Dimensions } from 'react-native';
+import { View, Text, StyleSheet, ScrollView, TouchableOpacity, Dimensions, Modal } from 'react-native';
 import React, { useState, useEffect } from 'react';
 import { useTheme } from '../hooks/ThemeContext';
 import CustomPicker from '../components/common/CustomPicker';
-import { fetchMonthlyTransactions } from '../utils/database';
+import { fetchMonthlyTransactions, fetchTransactionsByCategory } from '../utils/database';
 import { categoryOptions } from '../constants/formOptions';
 import { PieChart } from 'react-native-gifted-charts';
 import { useFocusEffect } from '@react-navigation/native';
+import Icon from 'react-native-vector-icons/Ionicons'
 
 const Charts = ({ navigation, route }) => {
     const { theme } = useTheme();
@@ -17,6 +18,9 @@ const Charts = ({ navigation, route }) => {
     const [yearlyData, setYearlyData] = useState({ income: {}, expense: {} });
     const [activeTab, setActiveTab] = useState('monthly');
     const [activeType, setActiveType] = useState('income');
+    const [showTransactions, setShowTransactions] = useState(false);
+    const [selectedCategory, setSelectedCategory] = useState(null);
+    const [categoryTransactions, setCategoryTransactions] = useState([]);
 
     const months = [
         'January', 'February', 'March', 'April', 'May', 'June',
@@ -125,6 +129,32 @@ const Charts = ({ navigation, route }) => {
             amount,
             percentage: ((amount / total) * 100).toFixed(1)
         }));
+    };
+
+    const handleCategoryPress = async (category, type) => {
+        try {
+            const date = activeTab === 'monthly' 
+                ? `${selectedYear}-${String(selectedMonth + 1).padStart(2, '0')}-01`
+                : selectedYear.toString();
+                
+            const transactions = await fetchTransactionsByCategory(
+                type, 
+                category, 
+                date, 
+                activeTab === 'monthly'
+            );
+            
+            setSelectedCategory({ name: category, type });
+            setCategoryTransactions(transactions);
+            setShowTransactions(true);
+        } catch (error) {
+            console.error('Error fetching category transactions:', error);
+        }
+    };
+
+    const handleTransactionPress = (date) => {
+        setShowTransactions(false);
+        navigation.navigate('Home', { targetDate: date });
     };
 
     const styles = StyleSheet.create({
@@ -250,7 +280,50 @@ const Charts = ({ navigation, route }) => {
             fontWeight: 'bold',
             textAlign: 'center',
             marginBottom: 16,
-        }
+        },
+        modalOverlay: {
+            flex: 1,
+            justifyContent: 'center',
+            alignItems: 'center',
+            backgroundColor: 'rgba(0, 0, 0, 0.5)',
+        },
+        transactionModal: {
+            backgroundColor: theme.cardBackground,
+            borderRadius: 12,
+            padding: 16,
+            width: '90%',
+            maxHeight: '80%',
+        },
+        modalHeader: {
+            flexDirection: 'row',
+            justifyContent: 'space-between',
+            alignItems: 'center',
+            marginBottom: 16,
+            borderBottomWidth: 1,
+            borderBottomColor: theme.borderColor,
+            paddingBottom: 8,
+        },
+        modalTitle: {
+            color: theme.color,
+            fontSize: 18,
+            fontWeight: 'bold',
+        },
+        transactionItem: {
+            borderBottomWidth: 1,
+            borderBottomColor: theme.borderColor,
+            paddingVertical: 12,
+        },
+        transactionTitle: {
+            color: theme.color,
+            fontSize: 16,
+            fontWeight: '500',
+        },
+        transactionDetail: {
+            color: theme.color,
+            opacity: 0.7,
+            fontSize: 14,
+            marginTop: 4,
+        },
     });
 
     const chartConfig = {
@@ -261,7 +334,11 @@ const Charts = ({ navigation, route }) => {
 
     const renderCategoryData = (data, type) => {
         return Object.entries(data).map(([category, amount]) => (
-            <View key={category} style={styles.categoryRow}>
+            <TouchableOpacity
+                key={category}
+                style={styles.categoryRow}
+                onPress={() => handleCategoryPress(category, type)}
+            >
                 <Text style={styles.categoryText}>{category}</Text>
                 <Text style={[
                     styles.amountText,
@@ -269,7 +346,7 @@ const Charts = ({ navigation, route }) => {
                 ]}>
                     ₹{amount.toFixed(2)}
                 </Text>
-            </View>
+            </TouchableOpacity>
         ));
     };
 
@@ -415,6 +492,51 @@ const Charts = ({ navigation, route }) => {
                     </View>
                 </>
             )}
+
+            <Modal
+                visible={showTransactions}
+                transparent={true}
+                animationType="slide"
+                onRequestClose={() => setShowTransactions(false)}
+            >
+                <View style={styles.modalOverlay}>
+                    <View style={styles.transactionModal}>
+                        <View style={styles.modalHeader}>
+                            <Text style={styles.modalTitle}>
+                                {selectedCategory?.name} Transactions
+                                {activeTab === 'monthly' && ` (${months[selectedMonth]} ${selectedYear})`}
+                                {activeTab === 'yearly' && ` (${selectedYear})`}
+                            </Text>
+                            <TouchableOpacity onPress={() => setShowTransactions(false)}>
+                                <Text style={{ color: theme.color }}>
+                                    <Icon name="close" size={20} color={theme.color} />
+                                </Text>
+                            </TouchableOpacity>
+                        </View>
+                        <ScrollView>
+                            {categoryTransactions.map(transaction => (
+                                <TouchableOpacity
+                                    key={transaction.id}
+                                    style={styles.transactionItem}
+                                    onPress={() => handleTransactionPress(transaction.date)}
+                                >
+                                    <Text style={styles.transactionTitle}>
+                                        {transaction.title} - ₹{transaction.amount}
+                                    </Text>
+                                    <Text style={styles.transactionDetail}>
+                                        {transaction.date} • {transaction.account}
+                                    </Text>
+                                    {transaction.description && (
+                                        <Text style={styles.transactionDetail}>
+                                            {transaction.description}
+                                        </Text>
+                                    )}
+                                </TouchableOpacity>
+                            ))}
+                        </ScrollView>
+                    </View>
+                </View>
+            </Modal>
         </ScrollView>
     );
 };

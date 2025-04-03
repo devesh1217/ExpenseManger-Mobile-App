@@ -30,6 +30,9 @@ const NavBar = ({ setMenuOpen, isMenuOpen }) => {
         },
         menuButton: {
             padding: 5,
+        },
+        searchButton: {
+            padding: 5,
         }
     });
 
@@ -37,11 +40,11 @@ const NavBar = ({ setMenuOpen, isMenuOpen }) => {
         <View style={styles.navbar}>
             <Text style={styles.title}>MyExpenseManager</Text>
             {/* <TouchableOpacity 
-                style={styles.menuButton}
-                onPress={() => setMenuOpen(prev => !prev)}
+                style={styles.searchButton}
+                onPress={() => navigation.navigate('Search')}
             >
                 <Icon 
-                    name={isMenuOpen ? 'close' : 'menu'} 
+                    name="search-outline" 
                     size={24} 
                     color="white" 
                 />
