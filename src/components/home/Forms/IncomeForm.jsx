@@ -9,7 +9,7 @@ import { Picker } from '@react-native-picker/picker';
 import CustomPicker from '../../common/CustomPicker';
 import { getAccounts, getCategories } from '../../../../src/utils/database';
 
-const IncomeForm = ({ onClose }) => {
+const IncomeForm = ({ onClose, navigation }) => {
     const { theme } = useTheme();
     const styles = StyleSheet.create({
         form: {
@@ -111,6 +111,15 @@ const IncomeForm = ({ onClose }) => {
         };
         insertTransaction(transaction, counter);
         dispatch(addIncome(transaction)); // Update Redux store
+        
+        // Force reload of Monthly and Yearly screens
+        if (navigation) {
+            navigation.navigate('Monthly', { reload: Date.now() });
+            navigation.navigate('Yearly', { reload: Date.now() });
+            navigation.navigate('Charts', { reload: Date.now() }); // Add Charts navigation
+            navigation.navigate('Home');
+        }
+        
         alert('Income saved!');
         onClose?.();
     };

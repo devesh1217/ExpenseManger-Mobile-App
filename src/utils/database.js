@@ -64,7 +64,8 @@ export const createTables = () => {
         icon TEXT,
         type TEXT,
         isSystem INTEGER DEFAULT 0,
-        isPermanent INTEGER DEFAULT 0
+        isPermanent INTEGER DEFAULT 0,
+        UNIQUE(name, type)
       );
     `);
 

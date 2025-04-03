@@ -194,43 +194,57 @@ const Monthly = ({ navigation, route }) => {
         (_, i) => new Date().getFullYear() - i
     );
 
-    useEffect(() => {
-        const fetchData = async () => {
-            try {
-                const year = selectedDate.getFullYear();
-                const month = String(selectedDate.getMonth() + 1).padStart(2, '0');
-                const dateString = `${year}-${month}-01`;
+    // Move fetchData outside useEffect to make it reusable
+    const fetchData = async () => {
+        try {
+            const year = selectedDate.getFullYear();
+            const month = String(selectedDate.getMonth() + 1).padStart(2, '0');
+            const dateString = `${year}-${month}-01`;
 
-                const [incomeTransactions, expenseTransactions] = await Promise.all([
-                    fetchMonthlyTransactions('income', dateString),
-                    fetchMonthlyTransactions('expense', dateString)
-                ]);
+            const [incomeTransactions, expenseTransactions] = await Promise.all([
+                fetchMonthlyTransactions('income', dateString),
+                fetchMonthlyTransactions('expense', dateString)
+            ]);
 
-                const allTransactions = [...incomeTransactions, ...expenseTransactions];
-                allTransactions.sort((a, b) => new Date(b.date) - new Date(a.date));
+            const allTransactions = [...incomeTransactions, ...expenseTransactions];
+            allTransactions.sort((a, b) => new Date(b.date) - new Date(a.date));
 
-                // Group transactions by date
-                const groupedTransactions = allTransactions.reduce((acc, transaction) => {
-                    const date = transaction.date;
-                    if (!acc[date]) {
-                        acc[date] = [];
-                    }
-                    acc[date].push(transaction);
-                    return acc;
-                }, {});
+            const groupedTransactions = allTransactions.reduce((acc, transaction) => {
+                const date = transaction.date;
+                if (!acc[date]) {
+                    acc[date] = [];
+                }
+                acc[date].push(transaction);
+                return acc;
+            }, {});
 
-                setTransactionsByDate(groupedTransactions);
-                setSummary({
-                    income: incomeTransactions.reduce((sum, t) => sum + parseFloat(t.amount), 0),
-                    expense: expenseTransactions.reduce((sum, t) => sum + parseFloat(t.amount), 0)
-                });
-            } catch (error) {
-                console.error('Error fetching monthly data:', error);
+            setTransactionsByDate(groupedTransactions);
+            setSummary({
+                income: incomeTransactions.reduce((sum, t) => sum + parseFloat(t.amount), 0),
+                expense: expenseTransactions.reduce((sum, t) => sum + parseFloat(t.amount), 0)
+            });
+        } catch (error) {
+            console.error('Error fetching monthly data:', error);
+        }
+    };
+
+    // Update useFocusEffect to handle both date changes and reload parameter
+    useFocusEffect(
+        React.useCallback(() => {
+            if (route.params?.selectedDate) {
+                const newDate = new Date(route.params.selectedDate);
+                if (selectedDate.getTime() !== newDate.getTime()) {
+                    setSelectedDate(newDate);
+                }
             }
-        };
-
-        fetchData();
-    }, [selectedDate]);
+            // Always fetch data when screen is focused or reload parameter changes
+            fetchData();
+            
+            return () => {
+                // Cleanup if needed
+            };
+        }, [route.params?.selectedDate, route.params?.reload, selectedDate])
+    );
 
     const calculateSummary = (transactions) => {
         return transactions.reduce((acc, transaction) => {
@@ -258,22 +272,6 @@ const Monthly = ({ navigation, route }) => {
         value: year,
         icon: 'calendar'
     }));
-
-    // Add useFocusEffect to reload data when screen is focused
-    useFocusEffect(
-        React.useCallback(() => {
-            if (route.params?.selectedDate) {
-                const newDate = new Date(route.params.selectedDate);
-                // Only update if the date is different
-                if (selectedDate.getTime() !== newDate.getTime()) {
-                    setSelectedDate(newDate);
-                }
-            }
-            return () => {
-                // Cleanup if needed
-            };
-        }, [route.params?.selectedDate])
-    );
 
     return (
         <View style={styles.container}>

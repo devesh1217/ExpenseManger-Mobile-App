@@ -3,12 +3,14 @@ import React, { useState, useRef } from 'react';
 import IncomeForm from './IncomeForm';
 import ExpenseForm from './ExpenseForm';
 import { useTheme } from '../../../hooks/ThemeContext';
+import { useNavigation } from '@react-navigation/native';
 
 const FormContainer = ({ onClose }) => {
     const [activeForm, setActiveForm] = useState('income');
     const { theme } = useTheme();
     const slideAnim = useRef(new Animated.Value(0)).current;
     const windowWidth = Dimensions.get('window').width;  // Get window width
+    const navigation = useNavigation();
 
     const panResponder = PanResponder.create({
         onStartShouldSetPanResponder: () => true,
@@ -96,10 +98,10 @@ const FormContainer = ({ onClose }) => {
                 ]}
             >
                 <View style={styles.formWrapper}>
-                    <IncomeForm onClose={onClose} />
+                    <IncomeForm onClose={onClose} navigation={navigation} />
                 </View>
                 <View style={styles.formWrapper}>
-                    <ExpenseForm onClose={onClose} />
+                    <ExpenseForm onClose={onClose} navigation={navigation} />
                 </View>
             </Animated.View>
         </View>

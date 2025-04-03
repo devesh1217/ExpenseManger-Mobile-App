@@ -9,7 +9,8 @@ import { addExpense } from '../../../../src/redux/slices/transactionSlice';
 import CustomPicker from '../../common/CustomPicker';
 import { getAccounts, getCategories } from '../../../../src/utils/database';
 
-const ExpenseForm = ({ onClose }) => {
+
+const ExpenseForm = ({ onClose, navigation }) => {
     const { theme } = useTheme();
     const counter = useSelector((state) => state.date.value);
     const dispatch = useDispatch();
@@ -112,9 +113,17 @@ const ExpenseForm = ({ onClose }) => {
             type: 'expense',
         };
         insertTransaction(transaction, counter);
-        dispatch(addExpense(transaction)); // Update Redux store
+        dispatch(addExpense(transaction));
+        
+        if (navigation) {
+            navigation.navigate('Monthly', { reload: Date.now() });
+            navigation.navigate('Yearly', { reload: Date.now() });
+            navigation.navigate('Charts', { reload: Date.now() }); // Add Charts navigation
+            navigation.navigate('Home');
+        }
+        
         Alert.alert('Expense saved!');
-        onClose?.();  // Call onClose after successful submission
+        onClose?.();
     };
 
     return (

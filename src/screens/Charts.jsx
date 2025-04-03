@@ -5,8 +5,9 @@ import CustomPicker from '../components/common/CustomPicker';
 import { fetchMonthlyTransactions } from '../utils/database';
 import { categoryOptions } from '../constants/formOptions';
 import { PieChart } from 'react-native-gifted-charts';
+import { useFocusEffect } from '@react-navigation/native';
 
-const Charts = () => {
+const Charts = ({ navigation, route }) => {
     const { theme } = useTheme();
     const [selectedMonth, setSelectedMonth] = useState(new Date().getMonth());
     const [selectedYear, setSelectedYear] = useState(new Date().getFullYear());
@@ -39,62 +40,68 @@ const Charts = () => {
         icon: 'calendar'
     }));
 
-    useEffect(() => {
-        fetchMonthData();
-        fetchYearData();
-    }, [selectedMonth, selectedYear]);
-
     const fetchMonthData = async () => {
-        const monthNum = String(selectedMonth + 1).padStart(2, '0');
-        const dateString = `${selectedYear}-${monthNum}-01`;
+        try {
+            const monthNum = String(selectedMonth + 1).padStart(2, '0');
+            const dateString = `${selectedYear}-${monthNum}-01`;
 
-        const processTransactions = (transactions, type) => {
-            return transactions.reduce((acc, t) => {
-                acc[t.category] = (acc[t.category] || 0) + parseFloat(t.amount);
-                return acc;
-            }, {});
-        };
+            const [incomeTransactions, expenseTransactions] = await Promise.all([
+                fetchMonthlyTransactions('income', dateString),
+                fetchMonthlyTransactions('expense', dateString)
+            ]);
 
-        const income = await new Promise(resolve => {
-            fetchMonthlyTransactions('income', dateString, (data) => resolve(processTransactions(data, 'income')));
-        });
+            const processTransactions = (transactions) => {
+                return transactions.reduce((acc, t) => {
+                    acc[t.category] = (acc[t.category] || 0) + parseFloat(t.amount);
+                    return acc;
+                }, {});
+            };
 
-        const expense = await new Promise(resolve => {
-            fetchMonthlyTransactions('expense', dateString, (data) => resolve(processTransactions(data, 'expense')));
-        });
-
-        setMonthlyData({ income, expense });
+            setMonthlyData({
+                income: processTransactions(incomeTransactions),
+                expense: processTransactions(expenseTransactions)
+            });
+        } catch (error) {
+            console.error('Error fetching monthly data:', error);
+        }
     };
 
     const fetchYearData = async () => {
-        const yearIncome = {};
-        const yearExpense = {};
+        try {
+            const yearIncome = {};
+            const yearExpense = {};
 
-        for (let month = 0; month < 12; month++) {
-            const monthNum = String(month + 1).padStart(2, '0');
-            const dateString = `${selectedYear}-${monthNum}-01`;
+            await Promise.all(months.map(async (_, month) => {
+                const monthNum = String(month + 1).padStart(2, '0');
+                const dateString = `${selectedYear}-${monthNum}-01`;
 
-            await new Promise(resolve => {
-                fetchMonthlyTransactions('income', dateString, (data) => {
-                    data.forEach(t => {
-                        yearIncome[t.category] = (yearIncome[t.category] || 0) + parseFloat(t.amount);
-                    });
-                    resolve();
+                const [incomeTransactions, expenseTransactions] = await Promise.all([
+                    fetchMonthlyTransactions('income', dateString),
+                    fetchMonthlyTransactions('expense', dateString)
+                ]);
+
+                incomeTransactions.forEach(t => {
+                    yearIncome[t.category] = (yearIncome[t.category] || 0) + parseFloat(t.amount);
                 });
-            });
 
-            await new Promise(resolve => {
-                fetchMonthlyTransactions('expense', dateString, (data) => {
-                    data.forEach(t => {
-                        yearExpense[t.category] = (yearExpense[t.category] || 0) + parseFloat(t.amount);
-                    });
-                    resolve();
+                expenseTransactions.forEach(t => {
+                    yearExpense[t.category] = (yearExpense[t.category] || 0) + parseFloat(t.amount);
                 });
-            });
+            }));
+
+            setYearlyData({ income: yearIncome, expense: yearExpense });
+        } catch (error) {
+            console.error('Error fetching yearly data:', error);
         }
-
-        setYearlyData({ income: yearIncome, expense: yearExpense });
     };
+
+    useFocusEffect(
+        React.useCallback(() => {
+            fetchMonthData();
+            fetchYearData();
+            return () => {};
+        }, [selectedMonth, selectedYear, route.params?.reload])
+    );
 
     const getChartData = (data, type) => {
         const colors = [

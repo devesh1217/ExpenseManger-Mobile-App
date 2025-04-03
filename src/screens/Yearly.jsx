@@ -4,8 +4,9 @@ import { useTheme } from '../hooks/ThemeContext';
 import MaterialIcons from 'react-native-vector-icons/MaterialIcons';
 import { fetchMonthlyTransactions } from '../utils/database';
 import CustomPicker from '../components/common/CustomPicker';
+import { useFocusEffect } from '@react-navigation/native';
 
-const Yearly = ({ navigation }) => {
+const Yearly = ({ navigation, route }) => {
     const { theme } = useTheme();
     const [selectedYear, setSelectedYear] = useState(new Date().getFullYear());
     const [showYearPicker, setShowYearPicker] = useState(false);
@@ -54,6 +55,14 @@ const Yearly = ({ navigation }) => {
     useEffect(() => {
         fetchYearData();
     }, [selectedYear]);
+
+    // Add useFocusEffect for reloading data
+    useFocusEffect(
+        React.useCallback(() => {
+            fetchYearData();
+            return () => {};
+        }, [selectedYear, route.params?.reload]) // Add reload parameter to dependencies
+    );
 
     const yearOptions = years.map(year => ({
         label: year.toString(),
