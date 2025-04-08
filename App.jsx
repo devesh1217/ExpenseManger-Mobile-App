@@ -21,6 +21,7 @@ import SetupGuide from './src/screens/SetupGuide';
 import { createStackNavigator } from '@react-navigation/stack';
 import About from './src/screens/About';
 import Export from './src/screens/Export';
+import { checkAndCreateBackup } from './src/utils/autoBackupUtils';
 
 const Stack = createStackNavigator();
 const Tab = createBottomTabNavigator();
@@ -76,7 +77,17 @@ const App = () => {
   const [isFirstLaunch, setIsFirstLaunch] = useState(null);
 
   useEffect(() => {
-    checkFirstLaunch();
+    const initializeApp = async () => {
+      try {
+        await checkFirstLaunch();
+        // Check for pending backup after app initialization
+        await checkAndCreateBackup();
+      } catch (error) {
+        console.error('Error initializing app:', error);
+      }
+    };
+
+    initializeApp();
   }, []);
   
   const checkFirstLaunch = async () => {

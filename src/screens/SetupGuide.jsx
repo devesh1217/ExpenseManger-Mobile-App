@@ -5,6 +5,7 @@ import Icon from 'react-native-vector-icons/Ionicons';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { getAccounts, updateAccount, deleteAccount, addAccount, getCategories, addCategory } from '../utils/database';
 import { accountIcons } from '../constants/iconOptions';
+import { checkBackupExists, restoreFromBackup } from '../utils/backupUtils';
 
 const SetupGuide = ({ navigation }) => {
     const { theme } = useTheme();
@@ -19,9 +20,11 @@ const SetupGuide = ({ navigation }) => {
     const [currentEditingForm, setCurrentEditingForm] = useState(null);
     const [newAccountIcon, setNewAccountIcon] = useState('wallet-outline');
     const [newCategoryIcon, setNewCategoryIcon] = useState('add-circle-outline');
+    const [hasBackup, setHasBackup] = useState(false);
 
     useEffect(() => {
         loadInitialData();
+        checkForBackup();
     }, []);
 
     const loadInitialData = async () => {
@@ -33,6 +36,24 @@ const SetupGuide = ({ navigation }) => {
             setLoading(false);
         } catch (error) {
             console.error('Error loading data:', error);
+        }
+    };
+
+    const checkForBackup = async () => {
+        const exists = await checkBackupExists();
+        setHasBackup(exists);
+    };
+
+    const handleRestore = async () => {
+        try {
+            await restoreFromBackup();
+            Alert.alert(
+                'Restore Successful',
+                'Your data has been restored successfully.',
+                [{ text: 'OK', onPress: () => navigation.replace('MainStack') }]
+            );
+        } catch (error) {
+            Alert.alert('Restore Failed', 'Failed to restore data. Please continue with fresh setup.');
         }
     };
 
@@ -354,6 +375,33 @@ const SetupGuide = ({ navigation }) => {
         return (
             <View style={[styles.container, { justifyContent: 'center', alignItems: 'center' }]}>
                 <Text style={styles.header}>Loading...</Text>
+            </View>
+        );
+    }
+
+    if (hasBackup) {
+        return (
+            <View style={styles.container}>
+                <Text style={styles.header}>Welcome Back!</Text>
+                <Text style={[styles.text, { marginBottom: 24 }]}>
+                    A backup of your previous data was found. Would you like to restore it?
+                </Text>
+                
+                <View style={styles.buttonContainer}>
+                    <TouchableOpacity 
+                        style={[styles.button, { backgroundColor: theme.appThemeColor }]}
+                        onPress={handleRestore}
+                    >
+                        <Text style={styles.buttonText}>Restore Data</Text>
+                    </TouchableOpacity>
+                    
+                    <TouchableOpacity 
+                        style={[styles.button, { backgroundColor: theme.cardBackground }]}
+                        onPress={() => setHasBackup(false)}
+                    >
+                        <Text style={[styles.buttonText, { color: theme.color }]}>Start Fresh</Text>
+                    </TouchableOpacity>
+                </View>
             </View>
         );
     }

@@ -4,8 +4,11 @@ import { useTheme } from '../hooks/ThemeContext';
 import Icon from 'react-native-vector-icons/Ionicons';
 import { getAccounts, addCustomAccount, getCategories, addCustomCategory, getAccountBalance, updateDefaultAccount, getAllAccountBalances, updateAccount, addAccount, deleteAccount, updateCategory, addCategory, deleteCategory } from '../utils/database';
 import { accountIcons } from '../constants/iconOptions';
+import { createBackup } from '../utils/backupUtils';
+import { setBackupInterval, getBackupInterval, BackupIntervals, getLastBackupDate, checkAndCreateBackup } from '../utils/autoBackupUtils';
+import CustomPicker from '../components/common/CustomPicker';
 
-const Setting = ({ navigation }) => {  // Add navigation prop
+const Setting = ({ navigation }) => {
     const { theme, toggleTheme } = useTheme();
     const [accounts, setAccounts] = useState([]);
     const [categories, setCategories] = useState({ income: [], expense: [] });
@@ -30,10 +33,21 @@ const Setting = ({ navigation }) => {  // Add navigation prop
     });
     const [showCategoryModal, setShowCategoryModal] = useState(false);
     const [editingCategory, setEditingCategory] = useState(null);
-    const [currentEditingForm, setCurrentEditingForm] = useState(null); // Track which form is being edited
+    const [currentEditingForm, setCurrentEditingForm] = useState(null);
+    const [backupInterval, setInterval] = useState(BackupIntervals.WEEKLY);
+    const [lastBackup, setLastBackup] = useState(null);
+    const [showBackupIntervalPicker, setShowBackupIntervalPicker] = useState(false);
+
+    const backupIntervalOptions = [
+        { label: 'Daily', value: BackupIntervals.DAILY, icon: 'time' },
+        { label: 'Weekly', value: BackupIntervals.WEEKLY, icon: 'calendar' },
+        { label: 'Monthly', value: BackupIntervals.MONTHLY, icon: 'calendar-clear' },
+        { label: 'Never', value: BackupIntervals.NEVER, icon: 'close-circle' }
+    ];
 
     useEffect(() => {
         loadData();
+        loadBackupSettings();
     }, []);
 
     const loadData = async () => {
@@ -44,6 +58,13 @@ const Setting = ({ navigation }) => {  // Add navigation prop
         setAccounts(fetchedAccounts);
         setCategories(fetchedCategories);
         setAllAccounts(allAccountBalances);
+    };
+
+    const loadBackupSettings = async () => {
+        const interval = await getBackupInterval();
+        const lastBackupDate = await getLastBackupDate();
+        setInterval(interval);
+        setLastBackup(lastBackupDate);
     };
 
     const handleAddAccount = async () => {
@@ -96,7 +117,7 @@ const Setting = ({ navigation }) => {  // Add navigation prop
     };
 
     const handleDeleteAccount = (account) => {
-        if (account.isPermanent === 1) {  // Check for numeric value instead of boolean
+        if (account.isPermanent === 1) {
             Alert.alert('Error', 'This account cannot be deleted');
             return;
         }
@@ -126,7 +147,7 @@ const Setting = ({ navigation }) => {  // Add navigation prop
     const handleDefaultAccount = async (id) => {
         try {
             await updateDefaultAccount(id);
-            loadData(); // Refresh account list after updating default status
+            loadData();
         } catch (error) {
             Alert.alert('Error', error.message || 'Failed to update default account');
         }
@@ -196,6 +217,35 @@ const Setting = ({ navigation }) => {  // Add navigation prop
             setCategoryForm({ ...categoryForm, icon });
         }
         setShowIconPicker(false);
+    };
+
+    const handleBackup = async () => {
+        try {
+            const backupPath = await createBackup();
+            Alert.alert(
+                'Backup Success',
+                `Backup saved to: ${backupPath}\n\nYou can find the backup file in your device storage under Android/data/com.myexpensemanager/files/backup/`
+            );
+        } catch (error) {
+            Alert.alert('Backup Failed', 'Failed to create backup. Please try again.');
+        }
+    };
+
+    const handleBackupIntervalChange = async (newInterval) => {
+        await setBackupInterval(newInterval);
+        await loadBackupSettings();
+    };
+
+    const handleManualBackup = async () => {
+        try {
+            const backupPath = await checkAndCreateBackup(true);
+            if (backupPath) {
+                Alert.alert('Backup Success', 'Manual backup created successfully');
+                await loadBackupSettings();
+            }
+        } catch (error) {
+            Alert.alert('Backup Failed', 'Failed to create backup');
+        }
     };
 
     const styles = StyleSheet.create({
@@ -342,6 +392,28 @@ const Setting = ({ navigation }) => {  // Add navigation prop
             fontWeight: 'bold',
             color: theme.color,
         },
+        settingItem: {
+            flexDirection: 'row',
+            justifyContent: 'space-between',
+            alignItems: 'center',
+            padding: 12,
+            borderBottomWidth: 1,
+            borderBottomColor: theme.borderColor,
+        },
+        settingItemLeft: {
+            flexDirection: 'row',
+            alignItems: 'center',
+            gap: 8,
+        },
+        settingText: {
+            color: theme.color,
+            fontSize: 16,
+        },
+        lastBackupText: {
+            marginTop: 8,
+            color: theme.color,
+            fontSize: 14,
+        },
     });
 
     return (
@@ -391,7 +463,7 @@ const Setting = ({ navigation }) => {  // Add navigation prop
                             </View>
                         </View>
                         <View style={styles.accountActions}>
-                            {account.isPermanent !== 1 && (  // Check for numeric value
+                            {account.isPermanent !== 1 && (
                                 <>
                                     <TouchableOpacity
                                         onPress={() => {
@@ -587,7 +659,6 @@ const Setting = ({ navigation }) => {  // Add navigation prop
                 ))}
             </View>
 
-            {/* Add Category Modal */}
             <Modal
                 visible={showCategoryModal}
                 transparent={true}
@@ -640,43 +711,52 @@ const Setting = ({ navigation }) => {  // Add navigation prop
                 </View>
             </Modal>
 
-            {/* Icon Picker Modal */}
-            <Modal
-                visible={showIconPicker}
-                transparent={true}
-                animationType="slide"
-                onRequestClose={() => setShowIconPicker(false)}
-            >
-                <View style={styles.modalOverlay}>
-                    <View style={styles.modalContent}>
-                        <View style={styles.modalHeader}>
-                            <Text style={styles.modalTitle}>Select Icon</Text>
-                            <TouchableOpacity onPress={() => setShowIconPicker(false)}>
-                                <Icon name="close" size={24} color={theme.color} />
-                            </TouchableOpacity>
-                        </View>
-                        <FlatList
-                            data={accountIcons}
-                            numColumns={4}
-                            renderItem={({ item }) => (
-                                <TouchableOpacity
-                                    style={[
-                                        styles.iconItem,
-                                        (currentEditingForm === 'account' && accountForm.icon === item) ||
-                                        (currentEditingForm === 'category' && categoryForm.icon === item)
-                                            ? styles.selectedIcon
-                                            : null,
-                                    ]}
-                                    onPress={() => handleIconSelect(item)}
-                                >
-                                    <Icon name={item} size={32} color={theme.color} />
-                                </TouchableOpacity>
-                            )}
-                            keyExtractor={item => item}
-                        />
+            <View style={styles.section}>
+                <Text style={styles.sectionTitle}>Backup</Text>
+                <TouchableOpacity 
+                    style={styles.settingItem}
+                    onPress={handleBackup}
+                >
+                    <View style={styles.settingItemLeft}>
+                        <Icon name="save" size={24} color={theme.color} />
+                        <Text style={styles.settingText}>Create Backup</Text>
                     </View>
+                    <Icon name="chevron-forward" size={24} color={theme.color} />
+                </TouchableOpacity>
+            </View>
+
+            <View style={styles.section}>
+                <Text style={styles.sectionTitle}>Backup Settings</Text>
+                
+                <TouchableOpacity style={styles.settingItem} onPress={handleManualBackup}>
+                    <View style={styles.settingItemLeft}>
+                        <Icon name="save" size={24} color={theme.color} />
+                        <Text style={styles.settingText}>Create Backup Now</Text>
+                    </View>
+                    <Icon name="chevron-forward" size={24} color={theme.color} />
+                </TouchableOpacity>
+
+                <View style={styles.settingItem}>
+                    <View style={styles.settingItemLeft}>
+                        <Icon name="time" size={24} color={theme.color} />
+                        <Text style={styles.settingText}>Auto Backup Interval</Text>
+                    </View>
+                    <CustomPicker
+                        value={backupInterval}
+                        options={backupIntervalOptions}
+                        onValueChange={handleBackupIntervalChange}
+                        placeholder="Select Interval"
+                        visible={showBackupIntervalPicker}
+                        setVisible={setShowBackupIntervalPicker}
+                    />
                 </View>
-            </Modal>
+
+                {lastBackup && (
+                    <Text style={styles.lastBackupText}>
+                        Last backup: {lastBackup.toLocaleDateString()}
+                    </Text>
+                )}
+            </View>
         </ScrollView>
     );
 };
