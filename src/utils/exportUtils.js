@@ -113,125 +113,161 @@ const generateCSVContent = (transactions) => {
         .join('\n');
 };
 
+const generateTempPath = (extension) => {
+    const fileName = `temp_${Date.now()}.${extension}`;
+    return `${RNFS.CachesDirectoryPath}/${fileName}`;
+};
+
+export const generatePDFPreview = async (transactions) => {
+    try {
+        const options = {
+            html: generatePDFContent(transactions),
+            fileName: `temp_${Date.now()}`,
+            directory: 'Cache'
+        };
+
+        const file = await RNHTMLtoPDF.convert(options);
+        return file.filePath;
+    } catch (error) {
+        console.error('PDF generation error:', error);
+        throw error;
+    }
+};
+
+export const savePDFToDownloads = async (tempFilePath) => {
+    try {
+        const downloadPath = `${RNFS.DownloadDirectoryPath}/MyExpenseManager`;
+        const fileName = `transactions_${Date.now()}.pdf`;
+        const finalPath = `${downloadPath}/${fileName}`;
+
+        // Create directory if doesn't exist
+        await RNFS.mkdir(downloadPath);
+        
+        // Copy from temp to downloads
+        await RNFS.copyFile(tempFilePath, finalPath);
+        
+        // Delete temp file
+        await RNFS.unlink(tempFilePath);
+
+        return finalPath;
+    } catch (error) {
+        console.error('Error saving PDF:', error);
+        throw error;
+    }
+};
+
+export const generateExcelPreview = async (transactions) => {
+    const csvContent = generateCSVContent(transactions);
+    const tempPath = generateTempPath('csv');
+    await RNFS.writeFile(tempPath, csvContent, 'utf8');
+    return tempPath;
+};
+
+export const saveExcelToDownloads = async (tempFilePath) => {
+    try {
+        const downloadPath = `${RNFS.DownloadDirectoryPath}/MyExpenseManager`;
+        const fileName = `transactions_${Date.now()}.csv`;
+        const finalPath = `${downloadPath}/${fileName}`;
+
+        await RNFS.mkdir(downloadPath);
+        await RNFS.copyFile(tempFilePath, finalPath);
+        await RNFS.unlink(tempFilePath);
+
+        return finalPath;
+    } catch (error) {
+        console.error('Error saving Excel:', error);
+        throw error;
+    }
+};
+
 export const exportAsCSV = async (transactions) => {
     try {
-        const hasPermission = await requestStoragePermission();
-        if (!hasPermission) {
-            Alert.alert(
-                'Permission Required',
-                'This app needs storage access to save files. Please grant permission to continue.',
-                [
-                    { text: 'Cancel', style: 'cancel' },
-                    { 
-                        text: 'Grant Permission',
-                        onPress: async () => {
-                            const granted = await requestStoragePermission();
-                            if (granted) {
-                                // Retry export after permission is granted
-                                exportAsCSV(transactions);
-                            }
-                        }
-                    }
-                ]
-            );
-            return;
-        }
-
-        const csvContent = generateCSVContent(transactions);
-        const fileName = `transactions_${Date.now()}.csv`;
-        const downloadPath = `${RNFS.DownloadDirectoryPath}/MyExpenseManager`;
-        const filePath = `${downloadPath}/${fileName}`;
-
-        // Create directory if it doesn't exist
-        await RNFS.mkdir(downloadPath);
-        await RNFS.writeFile(filePath, csvContent, 'utf8');
+        const tempPath = await generateExcelPreview(transactions);
 
         Alert.alert(
-            'File Saved',
-            `File saved to:\n${filePath}`,
+            'File Ready',
+            'The file is ready to be saved.',
             [
-                { text: 'OK' },
+                { text: 'Cancel', style: 'cancel' },
                 {
-                    text: 'Share',
-                    onPress: () => Share.open({
-                        url: `file://${filePath}`,
-                        type: 'text/csv',
-                        filename: fileName
-                    })
+                    text: 'Save',
+                    onPress: async () => {
+                        try {
+                            const savedPath = await saveExcelToDownloads(tempPath);
+                            Alert.alert(
+                                'File Saved',
+                                `File saved to:\n${savedPath}`,
+                                [
+                                    { text: 'OK' },
+                                    {
+                                        text: 'Share',
+                                        onPress: () => Share.open({
+                                            url: `file://${savedPath}`,
+                                            type: 'text/csv',
+                                            filename: savedPath.split('/').pop()
+                                        })
+                                    }
+                                ]
+                            );
+                        } catch (error) {
+                            console.error('Error saving file:', error);
+                            Alert.alert('Save Error', 'Failed to save the file.');
+                        }
+                    }
                 }
             ]
         );
 
-        return filePath;
+        return tempPath;
     } catch (error) {
         console.error('CSV Export error:', error);
-        Alert.alert('Export Error', 'Failed to save CSV file.');
+        Alert.alert('Export Error', 'Failed to prepare CSV file.');
         throw error;
     }
 };
 
 export const exportAsPDF = async (transactions) => {
     try {
-        const hasPermission = await requestStoragePermission();
-        if (!hasPermission) {
-            Alert.alert(
-                'Permission Required',
-                'This app needs storage access to save files. Please grant permission to continue.',
-                [
-                    { text: 'Cancel', style: 'cancel' },
-                    { 
-                        text: 'Grant Permission',
-                        onPress: async () => {
-                            const granted = await requestStoragePermission();
-                            if (granted) {
-                                // Retry export after permission is granted
-                                exportAsPDF(transactions);
-                            }
-                        }
-                    }
-                ]
-            );
-            return;
-        }
-
-        const fileName = `transactions_${Date.now()}`;
-        const downloadPath = `${RNFS.DownloadDirectoryPath}/MyExpenseManager`;
-        const filePath = `${downloadPath}/${fileName}.pdf`;
-
-        await RNFS.mkdir(downloadPath);
-
-        const options = {
-            html: generatePDFContent(transactions),
-            fileName,
-            directory: downloadPath,
-        };
-
-        const file = await RNHTMLtoPDF.convert(options);
-        
-        if (!file.filePath) {
-            throw new Error('PDF generation failed');
-        }
+        const tempPath = await generatePDFPreview(transactions);
 
         Alert.alert(
-            'File Saved',
-            `File saved to:\n${file.filePath}`,
+            'File Ready',
+            'The file is ready to be saved.',
             [
-                { text: 'OK' },
+                { text: 'Cancel', style: 'cancel' },
                 {
-                    text: 'Share',
-                    onPress: () => Share.open({
-                        url: `file://${file.filePath}`,
-                        type: 'application/pdf',
-                        filename: `${fileName}.pdf`
-                    })
+                    text: 'Save',
+                    onPress: async () => {
+                        try {
+                            const savedPath = await savePDFToDownloads(tempPath);
+                            Alert.alert(
+                                'File Saved',
+                                `File saved to:\n${savedPath}`,
+                                [
+                                    { text: 'OK' },
+                                    {
+                                        text: 'Share',
+                                        onPress: () => Share.open({
+                                            url: `file://${savedPath}`,
+                                            type: 'application/pdf',
+                                            filename: savedPath.split('/').pop()
+                                        })
+                                    }
+                                ]
+                            );
+                        } catch (error) {
+                            console.error('Error saving file:', error);
+                            Alert.alert('Save Error', 'Failed to save the file.');
+                        }
+                    }
                 }
             ]
         );
 
-        return file.filePath;
+        return tempPath;
     } catch (error) {
         console.error('PDF Export error:', error);
-        Alert.alert('Export Error', 'Failed to save PDF file.');
+        Alert.alert('Export Error', 'Failed to prepare PDF file.');
         throw error;
     }
 };

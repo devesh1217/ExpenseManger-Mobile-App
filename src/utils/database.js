@@ -596,10 +596,18 @@ export const fetchTransactionsByFilters = (query, filters) => {
         params.push(filters.endDate.toISOString().split('T')[0]);
       }
 
-      // Account filter
-      if (filters.account) {
-        conditions.push('account = ?');
-        params.push(filters.account);
+      // Account filter - updated to handle multiple accounts
+      if (filters.accounts && filters.accounts.length > 0) {
+        const accountPlaceholders = filters.accounts.map(() => '?').join(',');
+        conditions.push(`account IN (${accountPlaceholders})`);
+        params.push(...filters.accounts);
+      }
+
+      // Category filter - updated to handle multiple categories
+      if (filters.categories && filters.categories.length > 0) {
+        const categoryPlaceholders = filters.categories.map(() => '?').join(',');
+        conditions.push(`category IN (${categoryPlaceholders})`);
+        params.push(...filters.categories);
       }
 
       // Amount range filter
@@ -615,6 +623,9 @@ export const fetchTransactionsByFilters = (query, filters) => {
       const whereClause = conditions.length > 0 
         ? `WHERE ${conditions.join(' AND ')}` 
         : '';
+
+      console.log('SQL Query:', `SELECT * FROM Transactions ${whereClause} ORDER BY date DESC;`);
+      console.log('Params:', params);
 
       tx.executeSql(
         `SELECT * FROM Transactions ${whereClause} ORDER BY date DESC;`,
