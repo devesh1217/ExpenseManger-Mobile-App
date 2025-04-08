@@ -75,13 +75,15 @@ const App = () => {
   const [isFirstLaunch, setIsFirstLaunch] = useState(null);
 
   useEffect(() => {
-    createTables();
     checkFirstLaunch();
   }, []);
-
+  
   const checkFirstLaunch = async () => {
     try {
       const setupComplete = await AsyncStorage.getItem('setupComplete');
+      if(setupComplete !== 'true'){
+        createTables();
+      }
       setIsFirstLaunch(setupComplete !== 'true');
     } catch (error) {
       setIsFirstLaunch(true);
