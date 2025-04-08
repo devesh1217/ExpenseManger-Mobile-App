@@ -20,6 +20,7 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 import SetupGuide from './src/screens/SetupGuide';
 import { createStackNavigator } from '@react-navigation/stack';
 import About from './src/screens/About';
+import Export from './src/screens/Export';
 
 const Stack = createStackNavigator();
 const Tab = createBottomTabNavigator();
@@ -104,6 +105,7 @@ const App = () => {
                 <Stack.Screen name="MainStack" component={MainStack} />
                 <Stack.Screen name="Setting" component={Setting} />
                 <Stack.Screen name="About" component={About} />
+                <Stack.Screen name="Export" component={Export} />
             </Stack.Navigator>
           </NavigationContainer>
         </ThemeProvider>

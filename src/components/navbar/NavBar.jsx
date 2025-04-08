@@ -96,6 +96,17 @@ const NavBar = ({ setMenuOpen, isMenuOpen }) => {
                     </TouchableOpacity>
                     
                     <TouchableOpacity 
+                        style={styles.menuItem}
+                        onPress={() => {
+                            setShowMenu(false);
+                            navigation.navigate('Export');
+                        }}
+                    >
+                        <Icon name="download-outline" size={20} color={theme.color} />
+                        <Text style={styles.menuText}>Export Data</Text>
+                    </TouchableOpacity>
+
+                    <TouchableOpacity 
                         style={[styles.menuItem, { borderBottomWidth: 0 }]}
                         onPress={() => {
                             setShowMenu(false);
