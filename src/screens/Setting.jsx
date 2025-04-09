@@ -4,7 +4,7 @@ import { useTheme } from '../hooks/ThemeContext';
 import Icon from 'react-native-vector-icons/Ionicons';
 import { getAccounts, addCustomAccount, getCategories, addCustomCategory, getAccountBalance, updateDefaultAccount, getAllAccountBalances, updateAccount, addAccount, deleteAccount, updateCategory, addCategory, deleteCategory } from '../utils/database';
 import { accountIcons } from '../constants/iconOptions';
-import { createBackup } from '../utils/backupUtils';
+import { createBackup, checkBackupExists, restoreFromBackup } from '../utils/backupUtils';
 import { setBackupInterval, getBackupInterval, BackupIntervals, getLastBackupDate, checkAndCreateBackup } from '../utils/autoBackupUtils';
 import googleDriveService from '../utils/googleDriveService';
 import googleAuthService from '../utils/googleAuthService';
@@ -340,6 +340,33 @@ const Setting = ({ navigation }) => {
             Alert.alert('Success', 'Data restored from Google Drive');
         } catch (error) {
             Alert.alert('Restore Failed', error.message);
+        }
+    };
+
+    const handleRestoreFromDrive = async () => {
+        try {
+            Alert.alert(
+                'Confirm Restore',
+                'This will replace all your current data with the backup from Google Drive. Are you sure?',
+                [
+                    { text: 'Cancel', style: 'cancel' },
+                    {
+                        text: 'Restore',
+                        style: 'destructive',
+                        onPress: async () => {
+                            try {
+                                await googleDriveService.restoreFromDrive();
+                                Alert.alert('Success', 'Data restored successfully from Google Drive');
+                                loadData(); // Refresh the screen data
+                            } catch (error) {
+                                Alert.alert('Error', error.message || 'Failed to restore from Google Drive');
+                            }
+                        }
+                    }
+                ]
+            );
+        } catch (error) {
+            Alert.alert('Error', error.message || 'Failed to restore from Google Drive');
         }
     };
 
@@ -924,6 +951,17 @@ const Setting = ({ navigation }) => {
                             <View style={styles.settingItemLeft}>
                                 <Icon name="cloud-upload" size={24} color={theme.color} />
                                 <Text style={styles.settingText}>Backup Now</Text>
+                            </View>
+                            <Icon name="chevron-forward" size={24} color={theme.color} />
+                        </TouchableOpacity>
+
+                        <TouchableOpacity 
+                            style={styles.settingItem}
+                            onPress={handleRestoreFromDrive}
+                        >
+                            <View style={styles.settingItemLeft}>
+                                <Icon name="cloud-download" size={24} color={theme.color} />
+                                <Text style={styles.settingText}>Restore from Google Drive</Text>
                             </View>
                             <Icon name="chevron-forward" size={24} color={theme.color} />
                         </TouchableOpacity>

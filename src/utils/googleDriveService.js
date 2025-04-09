@@ -1,7 +1,10 @@
 import { GoogleSignin, statusCodes } from '@react-native-google-signin/google-signin';
-import { createBackup } from './backupUtils';
+import { createBackup, restoreFromBackup } from './backupUtils';
 import RNFS from 'react-native-fs';
 import AsyncStorage from '@react-native-async-storage/async-storage';
+
+const BACKUP_FOLDER_NAME = 'MyExpenseManager_Backup';
+const BACKUP_FILE_NAME = 'latest_backup.json';
 
 class GoogleDriveService {
     constructor() {
@@ -80,43 +83,117 @@ class GoogleDriveService {
         }
     }
 
-    async uploadToGoogleDrive() {
+    async ensureBackupFolder() {
         try {
-            await this.checkSignIn();
-            const backupPath = await createBackup();
-            const backupContent = await RNFS.readFile(backupPath, 'utf8');
-            
             const { accessToken } = await GoogleSignin.getTokens();
             
-            const metadata = {
-                name: `backup_${new Date().toISOString()}.json`,
-                mimeType: 'application/json'
-            };
-
-            const response = await fetch(
-                'https://www.googleapis.com/upload/drive/v3/files?uploadType=multipart',
+            // Check if folder already exists
+            const folderResponse = await fetch(
+                `https://www.googleapis.com/drive/v3/files?q=name='${BACKUP_FOLDER_NAME}' and mimeType='application/vnd.google-apps.folder'`,
                 {
-                    method: 'POST',
-                    headers: {
-                        Authorization: `Bearer ${accessToken}`,
-                        'Content-Type': 'multipart/related; boundary=foo_bar_baz'
-                    },
-                    body: '--foo_bar_baz\r\n' +
-                          'Content-Type: application/json\r\n\r\n' +
-                          JSON.stringify(metadata) + '\r\n' +
-                          '--foo_bar_baz\r\n' +
-                          'Content-Type: application/json\r\n\r\n' +
-                          backupContent + '\r\n' +
-                          '--foo_bar_baz--'
+                    headers: { Authorization: `Bearer ${accessToken}` }
                 }
             );
 
-            if (!response.ok) {
-                throw new Error('Upload failed');
+            const folderData = await folderResponse.json();
+            
+            if (folderData.files && folderData.files.length > 0) {
+                return folderData.files[0].id;
+            }
+
+            // Create new folder if doesn't exist
+            const createResponse = await fetch(
+                'https://www.googleapis.com/drive/v3/files',
+                {
+                    method: 'POST',
+                    headers: {
+                        'Authorization': `Bearer ${accessToken}`,
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({
+                        name: BACKUP_FOLDER_NAME,
+                        mimeType: 'application/vnd.google-apps.folder'
+                    })
+                }
+            );
+
+            const newFolder = await createResponse.json();
+            return newFolder.id;
+        } catch (error) {
+            console.error('Error ensuring backup folder:', error);
+            throw error;
+        }
+    }
+
+    async uploadToGoogleDrive() {
+        try {
+            await this.checkSignIn();
+            
+            // Create backup with metadata
+            const backupPath = await createBackup();
+            const backupContent = await RNFS.readFile(backupPath, 'utf8');
+            const backupData = {
+                metadata: {
+                    version: '1.0',
+                    timestamp: new Date().toISOString(),
+                    deviceInfo: 'Android'
+                },
+                data: JSON.parse(backupContent)
+            };
+
+            const folderId = await this.ensureBackupFolder();
+            
+            // Check for existing backup file
+            const { accessToken } = await GoogleSignin.getTokens();
+            const existingFileResponse = await fetch(
+                `https://www.googleapis.com/drive/v3/files?q=name='${BACKUP_FILE_NAME}' and '${folderId}' in parents`,
+                {
+                    headers: { Authorization: `Bearer ${accessToken}` }
+                }
+            );
+
+            const existingFiles = await existingFileResponse.json();
+            const existingFileId = existingFiles.files?.[0]?.id;
+
+            if (existingFileId) {
+                // Update existing file
+                await fetch(
+                    `https://www.googleapis.com/upload/drive/v3/files/${existingFileId}?uploadType=media`,
+                    {
+                        method: 'PATCH',
+                        headers: {
+                            'Authorization': `Bearer ${accessToken}`,
+                            'Content-Type': 'application/json'
+                        },
+                        body: JSON.stringify(backupData)
+                    }
+                );
+            } else {
+                // Create new file
+                await fetch(
+                    'https://www.googleapis.com/upload/drive/v3/files?uploadType=multipart',
+                    {
+                        method: 'POST',
+                        headers: {
+                            'Authorization': `Bearer ${accessToken}`,
+                            'Content-Type': 'multipart/related; boundary=foo_bar_baz'
+                        },
+                        body: '--foo_bar_baz\r\n' +
+                              'Content-Type: application/json\r\n\r\n' +
+                              JSON.stringify({
+                                  name: BACKUP_FILE_NAME,
+                                  parents: [folderId]
+                              }) + '\r\n' +
+                              '--foo_bar_baz\r\n' +
+                              'Content-Type: application/json\r\n\r\n' +
+                              JSON.stringify(backupData) + '\r\n' +
+                              '--foo_bar_baz--'
+                    }
+                );
             }
 
             await AsyncStorage.setItem('lastGoogleBackup', new Date().toISOString());
-            return await response.json();
+            return true;
         } catch (error) {
             console.error('Backup error:', error);
             throw error;
@@ -165,6 +242,41 @@ class GoogleDriveService {
             return await response.json();
         } catch (error) {
             throw new Error('Backup download failed: ' + error.message);
+        }
+    }
+
+    async restoreFromDrive() {
+        try {
+            await this.checkSignIn();
+            const folderId = await this.ensureBackupFolder();
+            
+            const { accessToken } = await GoogleSignin.getTokens();
+            const fileResponse = await fetch(
+                `https://www.googleapis.com/drive/v3/files?q=name='${BACKUP_FILE_NAME}' and '${folderId}' in parents`,
+                {
+                    headers: { Authorization: `Bearer ${accessToken}` }
+                }
+            );
+
+            const files = await fileResponse.json();
+            if (!files.files || files.files.length === 0) {
+                throw new Error('No backup found');
+            }
+
+            const backupFileId = files.files[0].id;
+            const backupResponse = await fetch(
+                `https://www.googleapis.com/drive/v3/files/${backupFileId}?alt=media`,
+                {
+                    headers: { Authorization: `Bearer ${accessToken}` }
+                }
+            );
+
+            const backupData = await backupResponse.json();
+            await restoreFromBackup(backupData.data);
+            return true;
+        } catch (error) {
+            console.error('Restore error:', error);
+            throw error;
         }
     }
 
