@@ -6,8 +6,6 @@ import { getAccounts, addCustomAccount, getCategories, addCustomCategory, getAcc
 import { accountIcons } from '../constants/iconOptions';
 import { createBackup, checkBackupExists, restoreFromBackup } from '../utils/backupUtils';
 import { setBackupInterval, getBackupInterval, BackupIntervals, getLastBackupDate, checkAndCreateBackup } from '../utils/autoBackupUtils';
-import googleDriveService from '../utils/googleDriveService';
-import googleAuthService from '../utils/googleAuthService';
 import CustomPicker from '../components/common/CustomPicker';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { format } from 'date-fns';
@@ -41,17 +39,6 @@ const Setting = ({ navigation }) => {
     const [backupInterval, setInterval] = useState(BackupIntervals.WEEKLY);
     const [lastBackup, setLastBackup] = useState(null);
     const [showBackupIntervalPicker, setShowBackupIntervalPicker] = useState(false);
-    const [backupInfo, setBackupInfo] = useState({
-        isConnected: false,
-        email: null,
-        lastBackupDate: null
-    });
-    const [googleUser, setGoogleUser] = useState(null);
-    const [backupStatus, setBackupStatus] = useState({
-        isConnected: false,
-        email: null,
-        lastBackupDate: null
-    });
     const [isLoading, setIsLoading] = useState(false);
     const [loadingMessage, setLoadingMessage] = useState('');
 
@@ -75,10 +62,6 @@ const Setting = ({ navigation }) => {
     useEffect(() => {
         loadData();
         loadBackupSettings();
-        loadBackupInfo();
-        loadGoogleInfo();
-        loadBackupStatus();
-        loadGoogleUserInfo();
     }, []);
 
     const loadData = async () => {
@@ -96,52 +79,6 @@ const Setting = ({ navigation }) => {
         const lastBackupDate = await getLastBackupDate();
         setInterval(interval);
         setLastBackup(lastBackupDate);
-    };
-
-    const loadBackupInfo = async () => {
-        try {
-            const info = await googleDriveService.getBackupStatus();
-            const userInfo = await googleDriveService.getCurrentUserInfo();
-            setBackupInfo({
-                ...info,
-                email: userInfo?.email || info.email
-            });
-        } catch (error) {
-            console.error('Error loading backup info:', error);
-        }
-    };
-
-    const loadGoogleInfo = async () => {
-        try {
-            const userStr = await AsyncStorage.getItem('googleUser');
-            const lastBackupDate = await AsyncStorage.getItem('lastGoogleBackup');
-            if (userStr) {
-                setGoogleUser(JSON.parse(userStr));
-            }
-            if (lastBackupDate) {
-                setLastBackup(new Date(lastBackupDate));
-            }
-        } catch (error) {
-            console.error('Error loading Google info:', error);
-        }
-    };
-
-    const loadBackupStatus = async () => {
-        try {
-            const status = await googleDriveService.getBackupStatus();
-            setBackupStatus(status);
-        } catch (error) {
-            console.error('Error loading backup status:', error);
-        }
-    };
-
-    const loadGoogleUserInfo = async () => {
-        try {
-            const userInfo = await googleDriveService.getCurrentUserInfo();
-            setGoogleUser(userInfo);
-        } catch (error) {
-            console.error('Error loading Google user info:', error);
-        }
     };
 
     const handleAddAccount = async () => {
@@ -296,18 +233,6 @@ const Setting = ({ navigation }) => {
         setShowIconPicker(false);
     };
 
-    const handleBackup = async () => {
-        try {
-            const backupPath = await createBackup();
-            Alert.alert(
-                'Backup Success',
-                `Backup saved to: ${backupPath}\n\nYou can find the backup file in your device storage under Android/data/com.myexpensemanager/files/backup/`
-            );
-        } catch (error) {
-            Alert.alert('Backup Failed', 'Failed to create backup. Please try again.');
-        }
-    };
-
     const handleBackupIntervalChange = async (newInterval) => {
         await setBackupInterval(newInterval);
         await loadBackupSettings();
@@ -322,75 +247,6 @@ const Setting = ({ navigation }) => {
             }
         } catch (error) {
             Alert.alert('Backup Failed', 'Failed to create backup');
-        }
-    };
-
-    const handleGoogleDriveBackup = async () => {
-        try {
-            showLoader('Creating backup...');
-            await googleDriveService.uploadToGoogleDrive();
-            await loadBackupInfo();
-            Alert.alert('Success', 'Backup uploaded to Google Drive');
-        } catch (error) {
-            Alert.alert('Backup Failed', error.message);
-        } finally {
-            hideLoader();
-        }
-    };
-
-    const handleGoogleDriveRestore = async () => {
-        try {
-            await googleDriveService.signIn();
-            const backups = await googleDriveService.listBackups();
-            
-            if (backups.length === 0) {
-                Alert.alert('No Backups', 'No backups found on Google Drive');
-                return;
-            }
-
-            const latestBackup = backups[0];
-            const backupData = await googleDriveService.downloadBackup(latestBackup.id);
-            
-            // Implement your restore logic here using backupData
-            Alert.alert('Success', 'Data restored from Google Drive');
-        } catch (error) {
-            Alert.alert('Restore Failed', error.message);
-        }
-    };
-
-    const handleRestoreFromDrive = async () => {
-        Alert.alert(
-            'Confirm Restore',
-            'This will replace all your current data with the backup from Google Drive. Are you sure?',
-            [
-                { text: 'Cancel', style: 'cancel' },
-                {
-                    text: 'Restore',
-                    style: 'destructive',
-                    onPress: async () => {
-                        try {
-                            showLoader('Restoring data...');
-                            await googleDriveService.restoreFromDrive();
-                            Alert.alert('Success', 'Data restored successfully');
-                            navigation.replace('MainStack');
-                        } catch (error) {
-                            Alert.alert('Error', error.message);
-                        } finally {
-                            hideLoader();
-                        }
-                    }
-                }
-            ]
-        );
-    };
-
-    const handleSignOut = async () => {
-        try {
-            await googleDriveService.signOut();
-            setBackupInfo({ isConnected: false, email: null, lastBackupDate: null });
-            Alert.alert('Success', 'Signed out from Google Drive');
-        } catch (error) {
-            Alert.alert('Error', 'Failed to sign out');
         }
     };
 
@@ -559,40 +415,6 @@ const Setting = ({ navigation }) => {
             marginTop: 8,
             color: theme.color,
             fontSize: 14,
-        },
-        backupInfo: {
-            marginBottom: 16,
-        },
-        emailText: {
-            color: theme.color,
-            fontSize: 14,
-            marginBottom: 4,
-        },
-        googleInfo: {
-            flexDirection: 'row',
-            alignItems: 'center',
-            padding: 12,
-            backgroundColor: theme.cardBackground,
-            borderRadius: 8,
-            marginBottom: 8,
-        },
-        googleUserInfo: {
-            marginLeft: 12,
-        },
-        emailAddress: {
-            color: theme.color,
-            fontSize: 16,
-            fontWeight: '500',
-        },
-        cloudInfo: {
-            flexDirection: 'row',
-            padding: 16,
-            backgroundColor: theme.cardBackground,
-            borderRadius: 8,
-            marginBottom: 12,
-        },
-        cloudDetails: {
-            marginLeft: 12,
         },
         loadingOverlay: {
             position: 'absolute',
@@ -920,20 +742,6 @@ const Setting = ({ navigation }) => {
                 </Modal>
 
                 <View style={styles.section}>
-                    <Text style={styles.sectionTitle}>Backup</Text>
-                    <TouchableOpacity 
-                        style={styles.settingItem}
-                        onPress={handleBackup}
-                    >
-                        <View style={styles.settingItemLeft}>
-                            <Icon name="save" size={24} color={theme.color} />
-                            <Text style={styles.settingText}>Create Backup</Text>
-                        </View>
-                        <Icon name="chevron-forward" size={24} color={theme.color} />
-                    </TouchableOpacity>
-                </View>
-
-                <View style={styles.section}>
                     <Text style={styles.sectionTitle}>Backup Settings</Text>
                     
                     <TouchableOpacity style={styles.settingItem} onPress={handleManualBackup}>
@@ -963,61 +771,6 @@ const Setting = ({ navigation }) => {
                         <Text style={styles.lastBackupText}>
                             Last backup: {lastBackup.toLocaleDateString()}
                         </Text>
-                    )}
-                </View>
-
-                <View style={styles.section}>
-                    <Text style={styles.sectionTitle}>Cloud Backup</Text>
-                    {backupInfo.isConnected ? (
-                        <>
-                            <View style={styles.cloudInfo}>
-                                <Icon name="logo-google" size={24} color={theme.color} />
-                                <View style={styles.cloudDetails}>
-                                    <Text style={styles.emailText}>Connected as:</Text>
-                                    <Text style={styles.emailAddress}>{backupInfo.email}</Text>
-                                    {backupInfo.lastBackupDate && (
-                                        <Text style={styles.lastBackupText}>
-                                            Last backup: {format(new Date(backupInfo.lastBackupDate), 'PPpp')}
-                                        </Text>
-                                    )}
-                                </View>
-                            </View>
-
-                            <TouchableOpacity style={styles.settingItem} onPress={handleGoogleDriveBackup}>
-                                <View style={styles.settingItemLeft}>
-                                    <Icon name="cloud-upload" size={24} color={theme.color} />
-                                    <Text style={styles.settingText}>Backup Now</Text>
-                                </View>
-                                <Icon name="chevron-forward" size={24} color={theme.color} />
-                            </TouchableOpacity>
-
-                            <TouchableOpacity 
-                                style={styles.settingItem}
-                                onPress={handleRestoreFromDrive}
-                            >
-                                <View style={styles.settingItemLeft}>
-                                    <Icon name="cloud-download" size={24} color={theme.color} />
-                                    <Text style={styles.settingText}>Restore from Google Drive</Text>
-                                </View>
-                                <Icon name="chevron-forward" size={24} color={theme.color} />
-                            </TouchableOpacity>
-
-                            <TouchableOpacity style={styles.settingItem} onPress={handleSignOut}>
-                                <View style={styles.settingItemLeft}>
-                                    <Icon name="log-out" size={24} color={theme.color} />
-                                    <Text style={styles.settingText}>Sign Out</Text>
-                                </View>
-                                <Icon name="chevron-forward" size={24} color={theme.color} />
-                            </TouchableOpacity>
-                        </>
-                    ) : (
-                        <TouchableOpacity style={styles.settingItem} onPress={handleGoogleDriveBackup}>
-                            <View style={styles.settingItemLeft}>
-                                <Icon name="logo-google" size={24} color={theme.color} />
-                                <Text style={styles.settingText}>Connect Google Drive</Text>
-                            </View>
-                            <Icon name="chevron-forward" size={24} color={theme.color} />
-                        </TouchableOpacity>
                     )}
                 </View>
             </ScrollView>

@@ -24,7 +24,7 @@ const SetupGuide = ({ navigation }) => {
 
     useEffect(() => {
         loadInitialData();
-        checkForBackup();
+        checkForLocalBackup();
     }, []);
 
     const loadInitialData = async () => {
@@ -39,9 +39,14 @@ const SetupGuide = ({ navigation }) => {
         }
     };
 
-    const checkForBackup = async () => {
-        const exists = await checkBackupExists();
-        setHasBackup(exists);
+    const checkForLocalBackup = async () => {
+        try {
+            const exists = await checkBackupExists();
+            setHasBackup(exists);
+        } catch (error) {
+            console.error('Error checking backup:', error);
+            setHasBackup(false);
+        }
     };
 
     const handleRestore = async () => {
@@ -60,7 +65,7 @@ const SetupGuide = ({ navigation }) => {
     };
 
     const handleStartFresh = () => {
-        setHasBackup(false); // This will show the regular setup flow
+        setHasBackup(false);
     };
 
     const handleAccountBalanceUpdate = async (id, balance) => {
