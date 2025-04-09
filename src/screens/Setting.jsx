@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { View, Text, StyleSheet, TouchableOpacity, TextInput, ScrollView, Switch, Modal, FlatList, Alert, ActivityIndicator } from 'react-native';
+import { View, Text, StyleSheet, TouchableOpacity, TextInput, ScrollView, Switch, Modal, FlatList, Alert } from 'react-native';
 import { useTheme } from '../hooks/ThemeContext';
 import Icon from 'react-native-vector-icons/Ionicons';
 import { getAccounts, addCustomAccount, getCategories, addCustomCategory, getAccountBalance, updateDefaultAccount, getAllAccountBalances, updateAccount, addAccount, deleteAccount, updateCategory, addCategory, deleteCategory } from '../utils/database';
@@ -52,18 +52,6 @@ const Setting = ({ navigation }) => {
         email: null,
         lastBackupDate: null
     });
-    const [isLoading, setIsLoading] = useState(false);
-    const [loadingMessage, setLoadingMessage] = useState('');
-
-    const showLoader = (message) => {
-        setLoadingMessage(message);
-        setIsLoading(true);
-    };
-
-    const hideLoader = () => {
-        setIsLoading(false);
-        setLoadingMessage('');
-    };
 
     const backupIntervalOptions = [
         { label: 'Daily', value: BackupIntervals.DAILY, icon: 'time' },
@@ -327,14 +315,11 @@ const Setting = ({ navigation }) => {
 
     const handleGoogleDriveBackup = async () => {
         try {
-            showLoader('Creating backup...');
             await googleDriveService.uploadToGoogleDrive();
-            await loadBackupInfo();
             Alert.alert('Success', 'Backup uploaded to Google Drive');
+            await loadBackupInfo(); // Refresh backup info after successful backup
         } catch (error) {
             Alert.alert('Backup Failed', error.message);
-        } finally {
-            hideLoader();
         }
     };
 
@@ -359,29 +344,30 @@ const Setting = ({ navigation }) => {
     };
 
     const handleRestoreFromDrive = async () => {
-        Alert.alert(
-            'Confirm Restore',
-            'This will replace all your current data with the backup from Google Drive. Are you sure?',
-            [
-                { text: 'Cancel', style: 'cancel' },
-                {
-                    text: 'Restore',
-                    style: 'destructive',
-                    onPress: async () => {
-                        try {
-                            showLoader('Restoring data...');
-                            await googleDriveService.restoreFromDrive();
-                            Alert.alert('Success', 'Data restored successfully');
-                            navigation.replace('MainStack');
-                        } catch (error) {
-                            Alert.alert('Error', error.message);
-                        } finally {
-                            hideLoader();
+        try {
+            Alert.alert(
+                'Confirm Restore',
+                'This will replace all your current data with the backup from Google Drive. Are you sure?',
+                [
+                    { text: 'Cancel', style: 'cancel' },
+                    {
+                        text: 'Restore',
+                        style: 'destructive',
+                        onPress: async () => {
+                            try {
+                                await googleDriveService.restoreFromDrive();
+                                Alert.alert('Success', 'Data restored successfully from Google Drive');
+                                loadData(); // Refresh the screen data
+                            } catch (error) {
+                                Alert.alert('Error', error.message || 'Failed to restore from Google Drive');
+                            }
                         }
                     }
-                }
-            ]
-        );
+                ]
+            );
+        } catch (error) {
+            Alert.alert('Error', error.message || 'Failed to restore from Google Drive');
+        }
     };
 
     const handleSignOut = async () => {
@@ -594,447 +580,411 @@ const Setting = ({ navigation }) => {
         cloudDetails: {
             marginLeft: 12,
         },
-        loadingOverlay: {
-            position: 'absolute',
-            top: 0,
-            left: 0,
-            right: 0,
-            bottom: 0,
-            backgroundColor: 'rgba(0, 0, 0, 0.7)',
-            justifyContent: 'center',
-            alignItems: 'center',
-            zIndex: 9999,
-        },
-        loadingContainer: {
-            backgroundColor: theme.cardBackground,
-            padding: 20,
-            borderRadius: 10,
-            alignItems: 'center',
-            minWidth: 200,
-        },
-        loadingText: {
+        lastBackupText: {
             color: theme.color,
-            marginTop: 10,
-            fontSize: 16,
-            textAlign: 'center',
-        },
-        loadingSpinner: {
-            height: 50,
+            fontSize: 12,
+            opacity: 0.7,
+            marginTop: 4,
         }
     });
 
     return (
-        <>
-            <ScrollView style={styles.container}>
-                <View style={styles.header}>
-                    <TouchableOpacity 
-                        style={styles.backButton}
-                        onPress={() => navigation.goBack()}
-                    >
-                        <Icon name="arrow-back" size={24} color={theme.color} />
-                    </TouchableOpacity>
-                    <Text style={styles.headerTitle}>Settings</Text>
-                </View>
-                <View style={styles.section}>
-                    <Text style={styles.sectionTitle}>Theme</Text>
-                    <View style={styles.themeToggle}>
-                        <Text style={styles.itemText}>Dark Mode</Text>
-                        <Switch
-                            value={theme.backgroundColor === '#121212'}
-                            onValueChange={toggleTheme}
-                        />
-                    </View>
-                </View>
-
-                <View style={styles.section}>
-                    <Text style={styles.sectionTitle}>Accounts</Text>
-                    <TouchableOpacity 
-                        style={styles.addButton}
-                        onPress={() => {
-                            setAccountForm({ name: '', icon: 'wallet-outline', openingBalance: '0' });
-                            setEditingAccount(null);
-                            setShowAccountModal(true);
-                        }}
-                    >
-                        <Text style={styles.buttonText}>Add Account</Text>
-                    </TouchableOpacity>
-
-                    {allAccounts.map((account) => (
-                        <View key={account.id} style={styles.item}>
-                            <View style={styles.accountInfo}>
-                                <Icon name={account.icon || 'wallet-outline'} size={24} color={theme.color} />
-                                <View style={styles.accountDetails}>
-                                    <Text style={styles.itemText}>{account.name}</Text>
-                                    <Text style={styles.balance}>
-                                        Balance: ₹{account.balance || 0}
-                                    </Text>
-                                </View>
-                            </View>
-                            <View style={styles.accountActions}>
-                                {account.isPermanent !== 1 && (
-                                    <>
-                                        <TouchableOpacity
-                                            onPress={() => {
-                                                setEditingAccount(account);
-                                                setAccountForm({
-                                                    name: account.name,
-                                                    icon: account.icon || 'wallet-outline',
-                                                    openingBalance: account.openingBalance?.toString() || '0'
-                                                });
-                                                setShowAccountModal(true);
-                                            }}
-                                        >
-                                            <Icon name="create-outline" size={24} color={theme.color} />
-                                        </TouchableOpacity>
-                                        <TouchableOpacity onPress={() => handleDeleteAccount(account)}>
-                                            <Icon name="trash-outline" size={24} color="#EF5350" />
-                                        </TouchableOpacity>
-                                    </>
-                                )}
-                                <TouchableOpacity 
-                                    onPress={() => handleDefaultAccount(account.id)}
-                                >
-                                    <Icon 
-                                        name={account.isDefault ? 'star' : 'star-outline'} 
-                                        size={24} 
-                                        color={account.isDefault ? theme.appThemeColor : theme.color}
-                                    />
-                                </TouchableOpacity>
-                            </View>
-                        </View>
-                    ))}
-                </View>
-
-                <Modal
-                    visible={showAccountModal}
-                    transparent={true}
-                    animationType="slide"
-                    onRequestClose={() => setShowAccountModal(false)}
+        <ScrollView style={styles.container}>
+            <View style={styles.header}>
+                <TouchableOpacity 
+                    style={styles.backButton}
+                    onPress={() => navigation.goBack()}
                 >
-                    <View style={styles.modalOverlay}>
-                        <View style={styles.modalContent}>
-                            <View style={styles.modalHeader}>
-                                <Text style={styles.modalTitle}>
-                                    {editingAccount ? 'Edit Account' : 'New Account'}
+                    <Icon name="arrow-back" size={24} color={theme.color} />
+                </TouchableOpacity>
+                <Text style={styles.headerTitle}>Settings</Text>
+            </View>
+            <View style={styles.section}>
+                <Text style={styles.sectionTitle}>Theme</Text>
+                <View style={styles.themeToggle}>
+                    <Text style={styles.itemText}>Dark Mode</Text>
+                    <Switch
+                        value={theme.backgroundColor === '#121212'}
+                        onValueChange={toggleTheme}
+                    />
+                </View>
+            </View>
+
+            <View style={styles.section}>
+                <Text style={styles.sectionTitle}>Accounts</Text>
+                <TouchableOpacity 
+                    style={styles.addButton}
+                    onPress={() => {
+                        setAccountForm({ name: '', icon: 'wallet-outline', openingBalance: '0' });
+                        setEditingAccount(null);
+                        setShowAccountModal(true);
+                    }}
+                >
+                    <Text style={styles.buttonText}>Add Account</Text>
+                </TouchableOpacity>
+
+                {allAccounts.map((account) => (
+                    <View key={account.id} style={styles.item}>
+                        <View style={styles.accountInfo}>
+                            <Icon name={account.icon || 'wallet-outline'} size={24} color={theme.color} />
+                            <View style={styles.accountDetails}>
+                                <Text style={styles.itemText}>{account.name}</Text>
+                                <Text style={styles.balance}>
+                                    Balance: ₹{account.balance || 0}
                                 </Text>
-                                <TouchableOpacity onPress={() => setShowAccountModal(false)}>
-                                    <Icon name="close" size={24} color={theme.color} />
-                                </TouchableOpacity>
-                            </View>
-
-                            <TextInput
-                                style={styles.input}
-                                placeholder="Account Name"
-                                placeholderTextColor={theme.color + '80'}
-                                value={accountForm.name}
-                                onChangeText={(text) => setAccountForm({...accountForm, name: text})}
-                            />
-
-                            <TextInput
-                                style={styles.input}
-                                placeholder="Opening Balance"
-                                placeholderTextColor={theme.color + '80'}
-                                value={accountForm.openingBalance}
-                                onChangeText={(text) => setAccountForm({...accountForm, openingBalance: text})}
-                                keyboardType="numeric"
-                            />
-
-                            <TouchableOpacity 
-                                style={styles.iconSelector}
-                                onPress={() => {
-                                    setCurrentEditingForm('account');
-                                    setShowIconPicker(true);
-                                }}
-                            >
-                                <View style={styles.iconSelectorContent}>
-                                    <Icon name={accountForm.icon} size={24} color={theme.color} />
-                                    <Text style={[styles.itemText, { marginLeft: 8 }]}>Select Icon</Text>
-                                </View>
-                            </TouchableOpacity>
-
-                            <View style={styles.buttonContainer}>
-                                <TouchableOpacity 
-                                    style={[styles.addButton, { flex: 1 }]}
-                                    onPress={handleSaveAccount}
-                                >
-                                    <Text style={styles.buttonText}>
-                                        {editingAccount ? 'Update' : 'Save'}
-                                    </Text>
-                                </TouchableOpacity>
                             </View>
                         </View>
-                    </View>
-                </Modal>
-
-                <Modal
-                    visible={showIconPicker}
-                    transparent={true}
-                    animationType="slide"
-                    onRequestClose={() => setShowIconPicker(false)}
-                >
-                    <View style={styles.modalOverlay}>
-                        <View style={styles.modalContent}>
-                            <View style={styles.modalHeader}>
-                                <Text style={styles.modalTitle}>Select Icon</Text>
-                                <TouchableOpacity onPress={() => setShowIconPicker(false)}>
-                                    <Icon name="close" size={24} color={theme.color} />
-                                </TouchableOpacity>
-                            </View>
-                            <FlatList
-                                data={accountIcons}
-                                numColumns={4}
-                                renderItem={({ item }) => (
-                                    <TouchableOpacity
-                                        style={[
-                                            styles.iconItem,
-                                            (currentEditingForm === 'account' && accountForm.icon === item) ||
-                                            (currentEditingForm === 'category' && categoryForm.icon === item)
-                                                ? styles.selectedIcon
-                                                : null,
-                                        ]}
-                                        onPress={() => handleIconSelect(item)}
-                                    >
-                                        <Icon name={item} size={32} color={theme.color} />
-                                    </TouchableOpacity>
-                                )}
-                                keyExtractor={item => item}
-                            />
-                        </View>
-                    </View>
-                </Modal>
-
-                <View style={styles.section}>
-                    <Text style={styles.sectionTitle}>Categories</Text>
-                    <View style={{ flexDirection: 'row', marginBottom: 8 }}>
-                        <TouchableOpacity
-                            style={[styles.addButton, { flex: 1, marginRight: 8, backgroundColor: categoryType === 'income' ? theme.appThemeColor : theme.cardBackground }]}
-                            onPress={() => {
-                                setCategoryType('income');
-                                setCategoryForm(prev => ({ ...prev, type: 'income' }));
-                            }}
-                        >
-                            <Text style={styles.buttonText}>Income</Text>
-                        </TouchableOpacity>
-                        <TouchableOpacity
-                            style={[styles.addButton, { flex: 1, backgroundColor: categoryType === 'expense' ? theme.appThemeColor : theme.cardBackground }]}
-                            onPress={() => {
-                                setCategoryType('expense');
-                                setCategoryForm(prev => ({ ...prev, type: 'expense' }));
-                            }}
-                        >
-                            <Text style={styles.buttonText}>Expense</Text>
-                        </TouchableOpacity>
-                    </View>
-
-                    <TouchableOpacity 
-                        style={styles.addButton}
-                        onPress={() => {
-                            setCategoryForm({ name: '', icon: 'add-circle-outline', type: categoryType });
-                            setEditingCategory(null);
-                            setShowCategoryModal(true);
-                        }}
-                    >
-                        <Text style={styles.buttonText}>Add Category</Text>
-                    </TouchableOpacity>
-
-                    {categories[categoryType]?.map((category) => (
-                        <View key={category.id} style={styles.item}>
-                            <View style={styles.accountInfo}>
-                                <Icon name={category.icon} size={24} color={theme.color} />
-                                <Text style={styles.itemText}>{category.name}</Text>
-                            </View>
-                            {category.isPermanent !== 1 && (
-                                <View style={styles.accountActions}>
+                        <View style={styles.accountActions}>
+                            {account.isPermanent !== 1 && (
+                                <>
                                     <TouchableOpacity
                                         onPress={() => {
-                                            setEditingCategory(category);
-                                            setCategoryForm({
-                                                name: category.name,
-                                                icon: category.icon,
-                                                type: category.type
+                                            setEditingAccount(account);
+                                            setAccountForm({
+                                                name: account.name,
+                                                icon: account.icon || 'wallet-outline',
+                                                openingBalance: account.openingBalance?.toString() || '0'
                                             });
-                                            setShowCategoryModal(true);
+                                            setShowAccountModal(true);
                                         }}
                                     >
                                         <Icon name="create-outline" size={24} color={theme.color} />
                                     </TouchableOpacity>
-                                    <TouchableOpacity onPress={() => handleDeleteCategory(category)}>
+                                    <TouchableOpacity onPress={() => handleDeleteAccount(account)}>
                                         <Icon name="trash-outline" size={24} color="#EF5350" />
                                     </TouchableOpacity>
-                                </View>
+                                </>
                             )}
-                        </View>
-                    ))}
-                </View>
-
-                <Modal
-                    visible={showCategoryModal}
-                    transparent={true}
-                    animationType="slide"
-                    onRequestClose={() => setShowCategoryModal(false)}
-                >
-                    <View style={styles.modalOverlay}>
-                        <View style={styles.modalContent}>
-                            <View style={styles.modalHeader}>
-                                <Text style={styles.modalTitle}>
-                                    {editingCategory ? 'Edit Category' : 'New Category'}
-                                </Text>
-                                <TouchableOpacity onPress={() => setShowCategoryModal(false)}>
-                                    <Icon name="close" size={24} color={theme.color} />
-                                </TouchableOpacity>
-                            </View>
-
-                            <TextInput
-                                style={styles.input}
-                                placeholder="Category Name"
-                                placeholderTextColor={theme.color + '80'}
-                                value={categoryForm.name}
-                                onChangeText={(text) => setCategoryForm({...categoryForm, name: text})}
-                            />
-
                             <TouchableOpacity 
-                                style={styles.iconSelector}
-                                onPress={() => {
-                                    setCurrentEditingForm('category');
-                                    setShowIconPicker(true);
-                                }}
+                                onPress={() => handleDefaultAccount(account.id)}
                             >
-                                <View style={styles.iconSelectorContent}>
-                                    <Icon name={categoryForm.icon} size={24} color={theme.color} />
-                                    <Text style={[styles.itemText, { marginLeft: 8 }]}>Select Icon</Text>
-                                </View>
+                                <Icon 
+                                    name={account.isDefault ? 'star' : 'star-outline'} 
+                                    size={24} 
+                                    color={account.isDefault ? theme.appThemeColor : theme.color}
+                                />
                             </TouchableOpacity>
-
-                            <View style={styles.buttonContainer}>
-                                <TouchableOpacity 
-                                    style={[styles.addButton, { flex: 1 }]}
-                                    onPress={handleSaveCategory}
-                                >
-                                    <Text style={styles.buttonText}>
-                                        {editingCategory ? 'Update' : 'Save'}
-                                    </Text>
-                                </TouchableOpacity>
-                            </View>
                         </View>
                     </View>
-                </Modal>
+                ))}
+            </View>
 
-                <View style={styles.section}>
-                    <Text style={styles.sectionTitle}>Backup</Text>
-                    <TouchableOpacity 
-                        style={styles.settingItem}
-                        onPress={handleBackup}
-                    >
-                        <View style={styles.settingItemLeft}>
-                            <Icon name="save" size={24} color={theme.color} />
-                            <Text style={styles.settingText}>Create Backup</Text>
+            <Modal
+                visible={showAccountModal}
+                transparent={true}
+                animationType="slide"
+                onRequestClose={() => setShowAccountModal(false)}
+            >
+                <View style={styles.modalOverlay}>
+                    <View style={styles.modalContent}>
+                        <View style={styles.modalHeader}>
+                            <Text style={styles.modalTitle}>
+                                {editingAccount ? 'Edit Account' : 'New Account'}
+                            </Text>
+                            <TouchableOpacity onPress={() => setShowAccountModal(false)}>
+                                <Icon name="close" size={24} color={theme.color} />
+                            </TouchableOpacity>
                         </View>
-                        <Icon name="chevron-forward" size={24} color={theme.color} />
-                    </TouchableOpacity>
+
+                        <TextInput
+                            style={styles.input}
+                            placeholder="Account Name"
+                            placeholderTextColor={theme.color + '80'}
+                            value={accountForm.name}
+                            onChangeText={(text) => setAccountForm({...accountForm, name: text})}
+                        />
+
+                        <TextInput
+                            style={styles.input}
+                            placeholder="Opening Balance"
+                            placeholderTextColor={theme.color + '80'}
+                            value={accountForm.openingBalance}
+                            onChangeText={(text) => setAccountForm({...accountForm, openingBalance: text})}
+                            keyboardType="numeric"
+                        />
+
+                        <TouchableOpacity 
+                            style={styles.iconSelector}
+                            onPress={() => {
+                                setCurrentEditingForm('account');
+                                setShowIconPicker(true);
+                            }}
+                        >
+                            <View style={styles.iconSelectorContent}>
+                                <Icon name={accountForm.icon} size={24} color={theme.color} />
+                                <Text style={[styles.itemText, { marginLeft: 8 }]}>Select Icon</Text>
+                            </View>
+                        </TouchableOpacity>
+
+                        <View style={styles.buttonContainer}>
+                            <TouchableOpacity 
+                                style={[styles.addButton, { flex: 1 }]}
+                                onPress={handleSaveAccount}
+                            >
+                                <Text style={styles.buttonText}>
+                                    {editingAccount ? 'Update' : 'Save'}
+                                </Text>
+                            </TouchableOpacity>
+                        </View>
+                    </View>
                 </View>
+            </Modal>
 
-                <View style={styles.section}>
-                    <Text style={styles.sectionTitle}>Backup Settings</Text>
-                    
-                    <TouchableOpacity style={styles.settingItem} onPress={handleManualBackup}>
-                        <View style={styles.settingItemLeft}>
-                            <Icon name="save" size={24} color={theme.color} />
-                            <Text style={styles.settingText}>Create Backup Now</Text>
+            <Modal
+                visible={showIconPicker}
+                transparent={true}
+                animationType="slide"
+                onRequestClose={() => setShowIconPicker(false)}
+            >
+                <View style={styles.modalOverlay}>
+                    <View style={styles.modalContent}>
+                        <View style={styles.modalHeader}>
+                            <Text style={styles.modalTitle}>Select Icon</Text>
+                            <TouchableOpacity onPress={() => setShowIconPicker(false)}>
+                                <Icon name="close" size={24} color={theme.color} />
+                            </TouchableOpacity>
                         </View>
-                        <Icon name="chevron-forward" size={24} color={theme.color} />
-                    </TouchableOpacity>
-
-                    <View style={styles.settingItem}>
-                        <View style={styles.settingItemLeft}>
-                            <Icon name="time" size={24} color={theme.color} />
-                            <Text style={styles.settingText}>Auto Backup Interval</Text>
-                        </View>
-                        <CustomPicker
-                            value={backupInterval}
-                            options={backupIntervalOptions}
-                            onValueChange={handleBackupIntervalChange}
-                            placeholder="Select Interval"
-                            visible={showBackupIntervalPicker}
-                            setVisible={setShowBackupIntervalPicker}
+                        <FlatList
+                            data={accountIcons}
+                            numColumns={4}
+                            renderItem={({ item }) => (
+                                <TouchableOpacity
+                                    style={[
+                                        styles.iconItem,
+                                        (currentEditingForm === 'account' && accountForm.icon === item) ||
+                                        (currentEditingForm === 'category' && categoryForm.icon === item)
+                                            ? styles.selectedIcon
+                                            : null,
+                                    ]}
+                                    onPress={() => handleIconSelect(item)}
+                                >
+                                    <Icon name={item} size={32} color={theme.color} />
+                                </TouchableOpacity>
+                            )}
+                            keyExtractor={item => item}
                         />
                     </View>
+                </View>
+            </Modal>
 
-                    {lastBackup && (
-                        <Text style={styles.lastBackupText}>
-                            Last backup: {lastBackup.toLocaleDateString()}
-                        </Text>
-                    )}
+            <View style={styles.section}>
+                <Text style={styles.sectionTitle}>Categories</Text>
+                <View style={{ flexDirection: 'row', marginBottom: 8 }}>
+                    <TouchableOpacity
+                        style={[styles.addButton, { flex: 1, marginRight: 8, backgroundColor: categoryType === 'income' ? theme.appThemeColor : theme.cardBackground }]}
+                        onPress={() => {
+                            setCategoryType('income');
+                            setCategoryForm(prev => ({ ...prev, type: 'income' }));
+                        }}
+                    >
+                        <Text style={styles.buttonText}>Income</Text>
+                    </TouchableOpacity>
+                    <TouchableOpacity
+                        style={[styles.addButton, { flex: 1, backgroundColor: categoryType === 'expense' ? theme.appThemeColor : theme.cardBackground }]}
+                        onPress={() => {
+                            setCategoryType('expense');
+                            setCategoryForm(prev => ({ ...prev, type: 'expense' }));
+                        }}
+                    >
+                        <Text style={styles.buttonText}>Expense</Text>
+                    </TouchableOpacity>
                 </View>
 
-                <View style={styles.section}>
-                    <Text style={styles.sectionTitle}>Cloud Backup</Text>
-                    {backupInfo.isConnected ? (
-                        <>
-                            <View style={styles.cloudInfo}>
-                                <Icon name="logo-google" size={24} color={theme.color} />
-                                <View style={styles.cloudDetails}>
-                                    <Text style={styles.emailText}>Connected as:</Text>
-                                    <Text style={styles.emailAddress}>{backupInfo.email}</Text>
-                                    {backupInfo.lastBackupDate && (
-                                        <Text style={styles.lastBackupText}>
-                                            Last backup: {format(new Date(backupInfo.lastBackupDate), 'PPpp')}
-                                        </Text>
-                                    )}
-                                </View>
+                <TouchableOpacity 
+                    style={styles.addButton}
+                    onPress={() => {
+                        setCategoryForm({ name: '', icon: 'add-circle-outline', type: categoryType });
+                        setEditingCategory(null);
+                        setShowCategoryModal(true);
+                    }}
+                >
+                    <Text style={styles.buttonText}>Add Category</Text>
+                </TouchableOpacity>
+
+                {categories[categoryType]?.map((category) => (
+                    <View key={category.id} style={styles.item}>
+                        <View style={styles.accountInfo}>
+                            <Icon name={category.icon} size={24} color={theme.color} />
+                            <Text style={styles.itemText}>{category.name}</Text>
+                        </View>
+                        {category.isPermanent !== 1 && (
+                            <View style={styles.accountActions}>
+                                <TouchableOpacity
+                                    onPress={() => {
+                                        setEditingCategory(category);
+                                        setCategoryForm({
+                                            name: category.name,
+                                            icon: category.icon,
+                                            type: category.type
+                                        });
+                                        setShowCategoryModal(true);
+                                    }}
+                                >
+                                    <Icon name="create-outline" size={24} color={theme.color} />
+                                </TouchableOpacity>
+                                <TouchableOpacity onPress={() => handleDeleteCategory(category)}>
+                                    <Icon name="trash-outline" size={24} color="#EF5350" />
+                                </TouchableOpacity>
                             </View>
+                        )}
+                    </View>
+                ))}
+            </View>
 
-                            <TouchableOpacity style={styles.settingItem} onPress={handleGoogleDriveBackup}>
-                                <View style={styles.settingItemLeft}>
-                                    <Icon name="cloud-upload" size={24} color={theme.color} />
-                                    <Text style={styles.settingText}>Backup Now</Text>
-                                </View>
-                                <Icon name="chevron-forward" size={24} color={theme.color} />
+            <Modal
+                visible={showCategoryModal}
+                transparent={true}
+                animationType="slide"
+                onRequestClose={() => setShowCategoryModal(false)}
+            >
+                <View style={styles.modalOverlay}>
+                    <View style={styles.modalContent}>
+                        <View style={styles.modalHeader}>
+                            <Text style={styles.modalTitle}>
+                                {editingCategory ? 'Edit Category' : 'New Category'}
+                            </Text>
+                            <TouchableOpacity onPress={() => setShowCategoryModal(false)}>
+                                <Icon name="close" size={24} color={theme.color} />
                             </TouchableOpacity>
+                        </View>
 
+                        <TextInput
+                            style={styles.input}
+                            placeholder="Category Name"
+                            placeholderTextColor={theme.color + '80'}
+                            value={categoryForm.name}
+                            onChangeText={(text) => setCategoryForm({...categoryForm, name: text})}
+                        />
+
+                        <TouchableOpacity 
+                            style={styles.iconSelector}
+                            onPress={() => {
+                                setCurrentEditingForm('category');
+                                setShowIconPicker(true);
+                            }}
+                        >
+                            <View style={styles.iconSelectorContent}>
+                                <Icon name={categoryForm.icon} size={24} color={theme.color} />
+                                <Text style={[styles.itemText, { marginLeft: 8 }]}>Select Icon</Text>
+                            </View>
+                        </TouchableOpacity>
+
+                        <View style={styles.buttonContainer}>
                             <TouchableOpacity 
-                                style={styles.settingItem}
-                                onPress={handleRestoreFromDrive}
+                                style={[styles.addButton, { flex: 1 }]}
+                                onPress={handleSaveCategory}
                             >
-                                <View style={styles.settingItemLeft}>
-                                    <Icon name="cloud-download" size={24} color={theme.color} />
-                                    <Text style={styles.settingText}>Restore from Google Drive</Text>
-                                </View>
-                                <Icon name="chevron-forward" size={24} color={theme.color} />
+                                <Text style={styles.buttonText}>
+                                    {editingCategory ? 'Update' : 'Save'}
+                                </Text>
                             </TouchableOpacity>
+                        </View>
+                    </View>
+                </View>
+            </Modal>
 
-                            <TouchableOpacity style={styles.settingItem} onPress={handleSignOut}>
-                                <View style={styles.settingItemLeft}>
-                                    <Icon name="log-out" size={24} color={theme.color} />
-                                    <Text style={styles.settingText}>Sign Out</Text>
-                                </View>
-                                <Icon name="chevron-forward" size={24} color={theme.color} />
-                            </TouchableOpacity>
-                        </>
-                    ) : (
+            <View style={styles.section}>
+                <Text style={styles.sectionTitle}>Backup</Text>
+                <TouchableOpacity 
+                    style={styles.settingItem}
+                    onPress={handleBackup}
+                >
+                    <View style={styles.settingItemLeft}>
+                        <Icon name="save" size={24} color={theme.color} />
+                        <Text style={styles.settingText}>Create Backup</Text>
+                    </View>
+                    <Icon name="chevron-forward" size={24} color={theme.color} />
+                </TouchableOpacity>
+            </View>
+
+            <View style={styles.section}>
+                <Text style={styles.sectionTitle}>Backup Settings</Text>
+                
+                <TouchableOpacity style={styles.settingItem} onPress={handleManualBackup}>
+                    <View style={styles.settingItemLeft}>
+                        <Icon name="save" size={24} color={theme.color} />
+                        <Text style={styles.settingText}>Create Backup Now</Text>
+                    </View>
+                    <Icon name="chevron-forward" size={24} color={theme.color} />
+                </TouchableOpacity>
+
+                <View style={styles.settingItem}>
+                    <View style={styles.settingItemLeft}>
+                        <Icon name="time" size={24} color={theme.color} />
+                        <Text style={styles.settingText}>Auto Backup Interval</Text>
+                    </View>
+                    <CustomPicker
+                        value={backupInterval}
+                        options={backupIntervalOptions}
+                        onValueChange={handleBackupIntervalChange}
+                        placeholder="Select Interval"
+                        visible={showBackupIntervalPicker}
+                        setVisible={setShowBackupIntervalPicker}
+                    />
+                </View>
+
+                {lastBackup && (
+                    <Text style={styles.lastBackupText}>
+                        Last backup: {lastBackup.toLocaleDateString()}
+                    </Text>
+                )}
+            </View>
+
+            <View style={styles.section}>
+                <Text style={styles.sectionTitle}>Cloud Backup</Text>
+                {backupInfo.isConnected ? (
+                    <>
+                        <View style={styles.cloudInfo}>
+                            <Icon name="logo-google" size={24} color={theme.color} />
+                            <View style={styles.cloudDetails}>
+                                <Text style={styles.emailText}>Connected as:</Text>
+                                <Text style={styles.emailAddress}>{backupInfo.email}</Text>
+                                {backupInfo.lastBackupDate && (
+                                    <Text style={styles.lastBackupText}>
+                                        Last backup: {format(new Date(backupInfo.lastBackupDate), 'PPpp')}
+                                    </Text>
+                                )}
+                            </View>
+                        </View>
+
                         <TouchableOpacity style={styles.settingItem} onPress={handleGoogleDriveBackup}>
                             <View style={styles.settingItemLeft}>
-                                <Icon name="logo-google" size={24} color={theme.color} />
-                                <Text style={styles.settingText}>Connect Google Drive</Text>
+                                <Icon name="cloud-upload" size={24} color={theme.color} />
+                                <Text style={styles.settingText}>Backup Now</Text>
                             </View>
                             <Icon name="chevron-forward" size={24} color={theme.color} />
                         </TouchableOpacity>
-                    )}
-                </View>
-            </ScrollView>
 
-            {isLoading && (
-                <View style={styles.loadingOverlay}>
-                    <View style={styles.loadingContainer}>
-                        <ActivityIndicator 
-                            size="large" 
-                            color={theme.appThemeColor}
-                            style={styles.loadingSpinner}
-                        />
-                        <Text style={styles.loadingText}>{loadingMessage}</Text>
-                    </View>
-                </View>
-            )}
-        </>
+                        <TouchableOpacity 
+                            style={styles.settingItem}
+                            onPress={handleRestoreFromDrive}
+                        >
+                            <View style={styles.settingItemLeft}>
+                                <Icon name="cloud-download" size={24} color={theme.color} />
+                                <Text style={styles.settingText}>Restore from Google Drive</Text>
+                            </View>
+                            <Icon name="chevron-forward" size={24} color={theme.color} />
+                        </TouchableOpacity>
+
+                        <TouchableOpacity style={styles.settingItem} onPress={handleSignOut}>
+                            <View style={styles.settingItemLeft}>
+                                <Icon name="log-out" size={24} color={theme.color} />
+                                <Text style={styles.settingText}>Sign Out</Text>
+                            </View>
+                            <Icon name="chevron-forward" size={24} color={theme.color} />
+                        </TouchableOpacity>
+                    </>
+                ) : (
+                    <TouchableOpacity style={styles.settingItem} onPress={handleGoogleDriveBackup}>
+                        <View style={styles.settingItemLeft}>
+                            <Icon name="logo-google" size={24} color={theme.color} />
+                            <Text style={styles.settingText}>Connect Google Drive</Text>
+                        </View>
+                        <Icon name="chevron-forward" size={24} color={theme.color} />
+                    </TouchableOpacity>
+                )}
+            </View>
+        </ScrollView>
     );
 };
 

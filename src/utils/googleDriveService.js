@@ -2,7 +2,6 @@ import { GoogleSignin, statusCodes } from '@react-native-google-signin/google-si
 import { createBackup, restoreFromBackup } from './backupUtils';
 import RNFS from 'react-native-fs';
 import AsyncStorage from '@react-native-async-storage/async-storage';
-import { encryptData, decryptData } from './encryptionUtils';
 
 const BACKUP_FOLDER_NAME = 'MyExpenseManager_Backup';
 const BACKUP_FILE_NAME = 'latest_backup.json';
@@ -130,10 +129,9 @@ class GoogleDriveService {
         try {
             await this.checkSignIn();
             
+            // Create backup with metadata
             const backupPath = await createBackup();
             const backupContent = await RNFS.readFile(backupPath, 'utf8');
-            
-            // Add metadata and encrypt
             const backupData = {
                 metadata: {
                     version: '1.0',
@@ -142,11 +140,6 @@ class GoogleDriveService {
                 },
                 data: JSON.parse(backupContent)
             };
-
-            const encryptedData = encryptData(backupData);
-            if (!encryptedData) {
-                throw new Error('Encryption failed');
-            }
 
             const folderId = await this.ensureBackupFolder();
             
@@ -172,7 +165,7 @@ class GoogleDriveService {
                             'Authorization': `Bearer ${accessToken}`,
                             'Content-Type': 'application/json'
                         },
-                        body: JSON.stringify(encryptedData)
+                        body: JSON.stringify(backupData)
                     }
                 );
             } else {
@@ -193,7 +186,7 @@ class GoogleDriveService {
                               }) + '\r\n' +
                               '--foo_bar_baz\r\n' +
                               'Content-Type: application/json\r\n\r\n' +
-                              JSON.stringify(encryptedData) + '\r\n' +
+                              JSON.stringify(backupData) + '\r\n' +
                               '--foo_bar_baz--'
                     }
                 );
@@ -278,8 +271,7 @@ class GoogleDriveService {
                 }
             );
 
-            const encryptedData = await backupResponse.json();
-            const backupData = decryptData(encryptedData);
+            const backupData = await backupResponse.json();
             await restoreFromBackup(backupData.data);
             return true;
         } catch (error) {
