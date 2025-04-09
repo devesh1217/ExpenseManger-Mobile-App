@@ -10,6 +10,7 @@ import googleDriveService from '../utils/googleDriveService';
 import googleAuthService from '../utils/googleAuthService';
 import CustomPicker from '../components/common/CustomPicker';
 import AsyncStorage from '@react-native-async-storage/async-storage';
+import { format } from 'date-fns';
 
 const Setting = ({ navigation }) => {
     const { theme, toggleTheme } = useTheme();
@@ -40,7 +41,11 @@ const Setting = ({ navigation }) => {
     const [backupInterval, setInterval] = useState(BackupIntervals.WEEKLY);
     const [lastBackup, setLastBackup] = useState(null);
     const [showBackupIntervalPicker, setShowBackupIntervalPicker] = useState(false);
-    const [backupInfo, setBackupInfo] = useState({ isConnected: false, email: null, lastBackup: null });
+    const [backupInfo, setBackupInfo] = useState({
+        isConnected: false,
+        email: null,
+        lastBackupDate: null
+    });
     const [googleUser, setGoogleUser] = useState(null);
     const [backupStatus, setBackupStatus] = useState({
         isConnected: false,
@@ -61,6 +66,7 @@ const Setting = ({ navigation }) => {
         loadBackupInfo();
         loadGoogleInfo();
         loadBackupStatus();
+        loadGoogleUserInfo();
     }, []);
 
     const loadData = async () => {
@@ -81,8 +87,16 @@ const Setting = ({ navigation }) => {
     };
 
     const loadBackupInfo = async () => {
-        const info = await googleDriveService.getBackupInfo();
-        setBackupInfo(info);
+        try {
+            const info = await googleDriveService.getBackupStatus();
+            const userInfo = await googleDriveService.getCurrentUserInfo();
+            setBackupInfo({
+                ...info,
+                email: userInfo?.email || info.email
+            });
+        } catch (error) {
+            console.error('Error loading backup info:', error);
+        }
     };
 
     const loadGoogleInfo = async () => {
@@ -106,6 +120,15 @@ const Setting = ({ navigation }) => {
             setBackupStatus(status);
         } catch (error) {
             console.error('Error loading backup status:', error);
+        }
+    };
+
+    const loadGoogleUserInfo = async () => {
+        try {
+            const userInfo = await googleDriveService.getCurrentUserInfo();
+            setGoogleUser(userInfo);
+        } catch (error) {
+            console.error('Error loading Google user info:', error);
         }
     };
 
@@ -294,7 +317,7 @@ const Setting = ({ navigation }) => {
         try {
             await googleDriveService.uploadToGoogleDrive();
             Alert.alert('Success', 'Backup uploaded to Google Drive');
-            await loadBackupStatus(); // Refresh status after backup
+            await loadBackupInfo(); // Refresh backup info after successful backup
         } catch (error) {
             Alert.alert('Backup Failed', error.message);
         }
@@ -322,8 +345,8 @@ const Setting = ({ navigation }) => {
 
     const handleSignOut = async () => {
         try {
-            await googleAuthService.signOut();
-            await loadBackupInfo();
+            await googleDriveService.signOut();
+            setBackupInfo({ isConnected: false, email: null, lastBackupDate: null });
             Alert.alert('Success', 'Signed out from Google Drive');
         } catch (error) {
             Alert.alert('Error', 'Failed to sign out');
@@ -504,6 +527,38 @@ const Setting = ({ navigation }) => {
             fontSize: 14,
             marginBottom: 4,
         },
+        googleInfo: {
+            flexDirection: 'row',
+            alignItems: 'center',
+            padding: 12,
+            backgroundColor: theme.cardBackground,
+            borderRadius: 8,
+            marginBottom: 8,
+        },
+        googleUserInfo: {
+            marginLeft: 12,
+        },
+        emailAddress: {
+            color: theme.color,
+            fontSize: 16,
+            fontWeight: '500',
+        },
+        cloudInfo: {
+            flexDirection: 'row',
+            padding: 16,
+            backgroundColor: theme.cardBackground,
+            borderRadius: 8,
+            marginBottom: 12,
+        },
+        cloudDetails: {
+            marginLeft: 12,
+        },
+        lastBackupText: {
+            color: theme.color,
+            fontSize: 12,
+            opacity: 0.7,
+            marginTop: 4,
+        }
     });
 
     return (
@@ -850,18 +905,33 @@ const Setting = ({ navigation }) => {
 
             <View style={styles.section}>
                 <Text style={styles.sectionTitle}>Cloud Backup</Text>
-                {backupStatus.isConnected ? (
+                {backupInfo.isConnected ? (
                     <>
-                        <Text style={styles.emailText}>Connected as: {backupStatus.email}</Text>
-                        {backupStatus.lastBackupDate && (
-                            <Text style={styles.lastBackupText}>
-                                Last backup: {backupStatus.lastBackupDate.toLocaleString()}
-                            </Text>
-                        )}
+                        <View style={styles.cloudInfo}>
+                            <Icon name="logo-google" size={24} color={theme.color} />
+                            <View style={styles.cloudDetails}>
+                                <Text style={styles.emailText}>Connected as:</Text>
+                                <Text style={styles.emailAddress}>{backupInfo.email}</Text>
+                                {backupInfo.lastBackupDate && (
+                                    <Text style={styles.lastBackupText}>
+                                        Last backup: {format(new Date(backupInfo.lastBackupDate), 'PPpp')}
+                                    </Text>
+                                )}
+                            </View>
+                        </View>
+
                         <TouchableOpacity style={styles.settingItem} onPress={handleGoogleDriveBackup}>
                             <View style={styles.settingItemLeft}>
                                 <Icon name="cloud-upload" size={24} color={theme.color} />
                                 <Text style={styles.settingText}>Backup Now</Text>
+                            </View>
+                            <Icon name="chevron-forward" size={24} color={theme.color} />
+                        </TouchableOpacity>
+
+                        <TouchableOpacity style={styles.settingItem} onPress={handleSignOut}>
+                            <View style={styles.settingItemLeft}>
+                                <Icon name="log-out" size={24} color={theme.color} />
+                                <Text style={styles.settingText}>Sign Out</Text>
                             </View>
                             <Icon name="chevron-forward" size={24} color={theme.color} />
                         </TouchableOpacity>

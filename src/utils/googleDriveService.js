@@ -167,6 +167,34 @@ class GoogleDriveService {
             throw new Error('Backup download failed: ' + error.message);
         }
     }
+
+    async signOut() {
+        try {
+            await GoogleSignin.signOut();
+            await AsyncStorage.removeItem('googleUser');
+            await AsyncStorage.removeItem('lastGoogleBackup');
+            return true;
+        } catch (error) {
+            console.error('Error signing out:', error);
+            throw error;
+        }
+    }
+
+    async getCurrentUserInfo() {
+        try {
+            const currentUser = await GoogleSignin.getCurrentUser();
+            if (currentUser) {
+                return {
+                    email: currentUser.user.email,
+                    name: currentUser.user.name
+                };
+            }
+            return null;
+        } catch (error) {
+            console.error('Error getting current user:', error);
+            return null;
+        }
+    }
 }
 
 export default new GoogleDriveService();
