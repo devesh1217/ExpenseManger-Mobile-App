@@ -22,6 +22,10 @@ DerivedData
 *.xcuserstate
 **/.xcode.env.local
 
+# Environment variables
+.env
+.env.*
+
 # Android/IntelliJ
 #
 build/
@@ -34,6 +38,13 @@ local.properties
 *.keystore
 !debug.keystore
 .kotlin/
+
+/android/app/google-services.json
+
+# Google credentials
+/src/config/googleCredentials.js
+/src/config/googleConfig.js
+*.json
 
 # node.js
 #

@@ -5,7 +5,6 @@ import { insertTransaction } from '../../../../src/utils/database';
 import { useTheme } from '../../../hooks/ThemeContext';
 import { useSelector, useDispatch } from 'react-redux';
 import { addIncome } from '../../../../src/redux/slices/transactionSlice';
-import { Picker } from '@react-native-picker/picker';
 import CustomPicker from '../../common/CustomPicker';
 import { getAccounts, getCategories } from '../../../../src/utils/database';
 
@@ -123,15 +122,6 @@ const IncomeForm = ({ onClose, navigation }) => {
         alert('Income saved!');
         onClose?.();
     };
-
-    const renderPickerItem = (item) => (
-        <Picker.Item
-            key={item.value}
-            label={item.label}
-            value={item.value}
-            style={styles.pickerItem}
-        />
-    );
 
     return (
         <View style={[styles.form]}>

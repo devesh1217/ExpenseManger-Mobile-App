@@ -22,6 +22,7 @@ import { createStackNavigator } from '@react-navigation/stack';
 import About from './src/screens/About';
 import Export from './src/screens/Export';
 import { checkAndCreateBackup } from './src/utils/autoBackupUtils';
+import { configureGoogleSignIn } from './src/utils/cloudBackup';
 
 const Stack = createStackNavigator();
 const Tab = createBottomTabNavigator();
@@ -80,7 +81,7 @@ const App = () => {
     const initializeApp = async () => {
       try {
         await checkFirstLaunch();
-        // Check for pending backup after app initialization
+        configureGoogleSignIn();
         await checkAndCreateBackup();
       } catch (error) {
         console.error('Error initializing app:', error);

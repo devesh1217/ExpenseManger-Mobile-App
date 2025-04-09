@@ -53,8 +53,14 @@ const SetupGuide = ({ navigation }) => {
                 [{ text: 'OK', onPress: () => navigation.replace('MainStack') }]
             );
         } catch (error) {
-            Alert.alert('Restore Failed', 'Failed to restore data. Please continue with fresh setup.');
+            Alert.alert('Restore Failed', 'Failed to restore data. Please continue with fresh setup.', [
+                { text: 'OK', onPress: () => setHasBackup(false) }
+            ]);
         }
+    };
+
+    const handleStartFresh = () => {
+        setHasBackup(false); // This will show the regular setup flow
     };
 
     const handleAccountBalanceUpdate = async (id, balance) => {
@@ -245,6 +251,36 @@ const SetupGuide = ({ navigation }) => {
             fontWeight: 'bold',
             color: theme.color,
         },
+        choiceButton: {
+            flexDirection: 'row',
+            alignItems: 'center',
+            padding: 16,
+            borderRadius: 12,
+            marginBottom: 16,
+            borderWidth: 1,
+            borderColor: theme.borderColor,
+        },
+        choiceTextContainer: {
+            marginLeft: 16,
+            flex: 1,
+        },
+        choiceTitle: {
+            fontSize: 18,
+            fontWeight: 'bold',
+            color: 'white',
+            marginBottom: 4,
+        },
+        choiceDescription: {
+            fontSize: 14,
+            color: 'white',
+            opacity: 0.8,
+        },
+        text: {
+            fontSize: 16,
+            color: theme.color,
+            textAlign: 'center',
+            lineHeight: 24,
+        },
     });
 
     const renderStep = () => {
@@ -382,24 +418,36 @@ const SetupGuide = ({ navigation }) => {
     if (hasBackup) {
         return (
             <View style={styles.container}>
-                <Text style={styles.header}>Welcome Back!</Text>
+                <Text style={styles.header}>Welcome to MyExpenseManager!</Text>
                 <Text style={[styles.text, { marginBottom: 24 }]}>
-                    A backup of your previous data was found. Would you like to restore it?
+                    A previous backup was found on your device. Would you like to restore your data or start fresh?
                 </Text>
                 
-                <View style={styles.buttonContainer}>
+                <View style={[styles.section, { marginTop: 24 }]}>
                     <TouchableOpacity 
-                        style={[styles.button, { backgroundColor: theme.appThemeColor }]}
+                        style={[styles.choiceButton, { backgroundColor: theme.appThemeColor }]}
                         onPress={handleRestore}
                     >
-                        <Text style={styles.buttonText}>Restore Data</Text>
+                        <Icon name="cloud-download" size={24} color="white" />
+                        <View style={styles.choiceTextContainer}>
+                            <Text style={styles.choiceTitle}>Restore Backup</Text>
+                            <Text style={styles.choiceDescription}>
+                                Restore your accounts, categories, and transactions from the backup
+                            </Text>
+                        </View>
                     </TouchableOpacity>
-                    
+
                     <TouchableOpacity 
-                        style={[styles.button, { backgroundColor: theme.cardBackground }]}
-                        onPress={() => setHasBackup(false)}
+                        style={[styles.choiceButton, { backgroundColor: theme.cardBackground }]}
+                        onPress={handleStartFresh}
                     >
-                        <Text style={[styles.buttonText, { color: theme.color }]}>Start Fresh</Text>
+                        <Icon name="add-circle" size={24} color={theme.color} />
+                        <View style={styles.choiceTextContainer}>
+                            <Text style={[styles.choiceTitle, { color: theme.color }]}>Start Fresh</Text>
+                            <Text style={[styles.choiceDescription, { color: theme.color }]}>
+                                Set up new accounts and categories from scratch
+                            </Text>
+                        </View>
                     </TouchableOpacity>
                 </View>
             </View>

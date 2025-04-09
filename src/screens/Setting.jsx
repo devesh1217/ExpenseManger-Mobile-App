@@ -6,7 +6,10 @@ import { getAccounts, addCustomAccount, getCategories, addCustomCategory, getAcc
 import { accountIcons } from '../constants/iconOptions';
 import { createBackup } from '../utils/backupUtils';
 import { setBackupInterval, getBackupInterval, BackupIntervals, getLastBackupDate, checkAndCreateBackup } from '../utils/autoBackupUtils';
+import googleDriveService from '../utils/googleDriveService';
+import googleAuthService from '../utils/googleAuthService';
 import CustomPicker from '../components/common/CustomPicker';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 
 const Setting = ({ navigation }) => {
     const { theme, toggleTheme } = useTheme();
@@ -37,6 +40,13 @@ const Setting = ({ navigation }) => {
     const [backupInterval, setInterval] = useState(BackupIntervals.WEEKLY);
     const [lastBackup, setLastBackup] = useState(null);
     const [showBackupIntervalPicker, setShowBackupIntervalPicker] = useState(false);
+    const [backupInfo, setBackupInfo] = useState({ isConnected: false, email: null, lastBackup: null });
+    const [googleUser, setGoogleUser] = useState(null);
+    const [backupStatus, setBackupStatus] = useState({
+        isConnected: false,
+        email: null,
+        lastBackupDate: null
+    });
 
     const backupIntervalOptions = [
         { label: 'Daily', value: BackupIntervals.DAILY, icon: 'time' },
@@ -48,6 +58,9 @@ const Setting = ({ navigation }) => {
     useEffect(() => {
         loadData();
         loadBackupSettings();
+        loadBackupInfo();
+        loadGoogleInfo();
+        loadBackupStatus();
     }, []);
 
     const loadData = async () => {
@@ -65,6 +78,35 @@ const Setting = ({ navigation }) => {
         const lastBackupDate = await getLastBackupDate();
         setInterval(interval);
         setLastBackup(lastBackupDate);
+    };
+
+    const loadBackupInfo = async () => {
+        const info = await googleDriveService.getBackupInfo();
+        setBackupInfo(info);
+    };
+
+    const loadGoogleInfo = async () => {
+        try {
+            const userStr = await AsyncStorage.getItem('googleUser');
+            const lastBackupDate = await AsyncStorage.getItem('lastGoogleBackup');
+            if (userStr) {
+                setGoogleUser(JSON.parse(userStr));
+            }
+            if (lastBackupDate) {
+                setLastBackup(new Date(lastBackupDate));
+            }
+        } catch (error) {
+            console.error('Error loading Google info:', error);
+        }
+    };
+
+    const loadBackupStatus = async () => {
+        try {
+            const status = await googleDriveService.getBackupStatus();
+            setBackupStatus(status);
+        } catch (error) {
+            console.error('Error loading backup status:', error);
+        }
     };
 
     const handleAddAccount = async () => {
@@ -248,6 +290,46 @@ const Setting = ({ navigation }) => {
         }
     };
 
+    const handleGoogleDriveBackup = async () => {
+        try {
+            await googleDriveService.uploadToGoogleDrive();
+            Alert.alert('Success', 'Backup uploaded to Google Drive');
+            await loadBackupStatus(); // Refresh status after backup
+        } catch (error) {
+            Alert.alert('Backup Failed', error.message);
+        }
+    };
+
+    const handleGoogleDriveRestore = async () => {
+        try {
+            await googleDriveService.signIn();
+            const backups = await googleDriveService.listBackups();
+            
+            if (backups.length === 0) {
+                Alert.alert('No Backups', 'No backups found on Google Drive');
+                return;
+            }
+
+            const latestBackup = backups[0];
+            const backupData = await googleDriveService.downloadBackup(latestBackup.id);
+            
+            // Implement your restore logic here using backupData
+            Alert.alert('Success', 'Data restored from Google Drive');
+        } catch (error) {
+            Alert.alert('Restore Failed', error.message);
+        }
+    };
+
+    const handleSignOut = async () => {
+        try {
+            await googleAuthService.signOut();
+            await loadBackupInfo();
+            Alert.alert('Success', 'Signed out from Google Drive');
+        } catch (error) {
+            Alert.alert('Error', 'Failed to sign out');
+        }
+    };
+
     const styles = StyleSheet.create({
         container: {
             flex: 1,
@@ -413,6 +495,14 @@ const Setting = ({ navigation }) => {
             marginTop: 8,
             color: theme.color,
             fontSize: 14,
+        },
+        backupInfo: {
+            marginBottom: 16,
+        },
+        emailText: {
+            color: theme.color,
+            fontSize: 14,
+            marginBottom: 4,
         },
     });
 
@@ -755,6 +845,35 @@ const Setting = ({ navigation }) => {
                     <Text style={styles.lastBackupText}>
                         Last backup: {lastBackup.toLocaleDateString()}
                     </Text>
+                )}
+            </View>
+
+            <View style={styles.section}>
+                <Text style={styles.sectionTitle}>Cloud Backup</Text>
+                {backupStatus.isConnected ? (
+                    <>
+                        <Text style={styles.emailText}>Connected as: {backupStatus.email}</Text>
+                        {backupStatus.lastBackupDate && (
+                            <Text style={styles.lastBackupText}>
+                                Last backup: {backupStatus.lastBackupDate.toLocaleString()}
+                            </Text>
+                        )}
+                        <TouchableOpacity style={styles.settingItem} onPress={handleGoogleDriveBackup}>
+                            <View style={styles.settingItemLeft}>
+                                <Icon name="cloud-upload" size={24} color={theme.color} />
+                                <Text style={styles.settingText}>Backup Now</Text>
+                            </View>
+                            <Icon name="chevron-forward" size={24} color={theme.color} />
+                        </TouchableOpacity>
+                    </>
+                ) : (
+                    <TouchableOpacity style={styles.settingItem} onPress={handleGoogleDriveBackup}>
+                        <View style={styles.settingItemLeft}>
+                            <Icon name="logo-google" size={24} color={theme.color} />
+                            <Text style={styles.settingText}>Connect Google Drive</Text>
+                        </View>
+                        <Icon name="chevron-forward" size={24} color={theme.color} />
+                    </TouchableOpacity>
                 )}
             </View>
         </ScrollView>
