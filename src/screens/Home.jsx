@@ -10,12 +10,11 @@ import { useDispatch, useSelector } from 'react-redux';
 import { useRoute } from '@react-navigation/native';
 import { addDays } from 'date-fns';
 
-const HomeContainer = () => {
+const HomeContainer = ({ route }) => {
     const { theme } = useTheme();
     const [showModal, setShowModal] = useState(false);
     const counter = useSelector(state => state.date.value)
     const dispatch = useDispatch();
-    const route = useRoute();
 
     useEffect(() => {
         if (route.params?.targetDate) {
@@ -129,7 +128,7 @@ const HomeContainer = () => {
                 >
                     <View style={styles.modalContent}>
                         <TouchableOpacity activeOpacity={1} onPress={(e) => e.stopPropagation()}>
-                            <FormContainer onClose={() => setShowModal(false)} />
+                            <FormContainer onClose={() => setShowModal(false)} defaultAccount={route.params?.defaultAccount} />
                         </TouchableOpacity>
                     </View>
                 </TouchableOpacity>

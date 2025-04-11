@@ -32,7 +32,7 @@ const themes = {
 
 const ThemeContext = createContext();
 
-export const ThemeProvider = ({ children }) => {
+export const ThemeProvider = ({ children, defaultAccount }) => {
     const colorScheme = useColorScheme();
     const [theme, setTheme] = useState(themes[colorScheme] || themes.light);
 
@@ -48,8 +48,15 @@ export const ThemeProvider = ({ children }) => {
         setTheme((prevTheme) => (prevTheme === themes.light ? themes.dark : themes.light));
     };
 
+    // Add defaultAccount to the context value
+    const value = {
+        theme,
+        toggleTheme,
+        defaultAccount
+    };
+
     return (
-        <ThemeContext.Provider value={{ theme, toggleTheme }}>
+        <ThemeContext.Provider value={value}>
             {children}
         </ThemeContext.Provider>
     );

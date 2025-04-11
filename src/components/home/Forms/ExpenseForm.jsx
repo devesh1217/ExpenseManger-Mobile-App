@@ -8,12 +8,14 @@ import { useSelector, useDispatch } from 'react-redux';
 import { addExpense } from '../../../../src/redux/slices/transactionSlice';
 import CustomPicker from '../../common/CustomPicker';
 import { getAccounts, getCategories } from '../../../../src/utils/database';
-
+import { useNavigation, useRoute } from '@react-navigation/native';
 
 const ExpenseForm = ({ onClose, navigation }) => {
     const { theme } = useTheme();
     const counter = useSelector((state) => state.date.value);
     const dispatch = useDispatch();
+    const route = useRoute();
+    const defaultAccount = route.params?.defaultAccount || 'Cash';
     const [customAccounts, setCustomAccounts] = useState([]);
     const [customCategories, setCustomCategories] = useState([]);
 
@@ -95,7 +97,7 @@ const ExpenseForm = ({ onClose, navigation }) => {
         title: '',
         description: '',
         amount: 0,
-        account: '',
+        account: defaultAccount,
         category: '',
         sentTo: '',
     });

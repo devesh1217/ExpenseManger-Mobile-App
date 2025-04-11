@@ -7,9 +7,13 @@ import { useSelector, useDispatch } from 'react-redux';
 import { addIncome } from '../../../../src/redux/slices/transactionSlice';
 import CustomPicker from '../../common/CustomPicker';
 import { getAccounts, getCategories } from '../../../../src/utils/database';
+import { useNavigation, useRoute } from '@react-navigation/native';
 
 const IncomeForm = ({ onClose, navigation }) => {
     const { theme } = useTheme();
+    const route = useRoute();
+    const defaultAccount = route.params?.defaultAccount || 'Cash';
+
     const styles = StyleSheet.create({
         form: {
             width: '100%',
@@ -67,7 +71,7 @@ const IncomeForm = ({ onClose, navigation }) => {
         title: '',
         description: '',
         amount: 0,
-        account: '',
+        account: defaultAccount,
         category: '',
         type: '',
     });

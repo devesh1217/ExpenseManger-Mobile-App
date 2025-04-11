@@ -6,7 +6,7 @@ import HomeContainer from './src/screens/Home';
 import NavBar from './src/components/navbar/NavBar';
 import store from './src/redux/store';
 import { Provider } from 'react-redux';
-import { createTables } from './src/utils/database';
+import { createTables, getAccounts } from './src/utils/database';
 import { GestureHandlerRootView } from 'react-native-gesture-handler';
 import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
 import { NavigationContainer } from '@react-navigation/native';
@@ -75,11 +75,17 @@ const MainStack = () => {
 
 const App = () => {
   const [isFirstLaunch, setIsFirstLaunch] = useState(null);
+  const [defaultAccount, setDefaultAccount] = useState('Cash'); // Default to Cash initially
 
   useEffect(() => {
     const initializeApp = async () => {
       try {
         await checkFirstLaunch();
+        if (!isFirstLaunch) {
+          const accounts = await getAccounts();
+          const defaultAcc = accounts.find(acc => acc.isDefault === 1);
+          setDefaultAccount(defaultAcc?.name || 'Cash');
+        }
         await checkAndCreateBackup();
       } catch (error) {
         console.error('Error initializing app:', error);
@@ -87,8 +93,8 @@ const App = () => {
     };
 
     initializeApp();
-  }, []);
-  
+  }, [isFirstLaunch]);
+
   const checkFirstLaunch = async () => {
     try {
       const setupComplete = await AsyncStorage.getItem('setupComplete');
@@ -111,8 +117,16 @@ const App = () => {
         <ThemeProvider>
           <NavigationContainer style={{ flex: 1 }}>
             <Stack.Navigator screenOptions={{ headerShown: false }} initialRouteName={isFirstLaunch ? 'Setup' : 'MainStack'}>
-                <Stack.Screen name="Setup" component={SetupGuide} />
-                <Stack.Screen name="MainStack" component={MainStack} />
+                <Stack.Screen 
+                  name="Setup" 
+                  component={SetupGuide} 
+                  initialParams={{ defaultAccount }} 
+                />
+                <Stack.Screen 
+                  name="MainStack" 
+                  component={MainStack} 
+                  initialParams={{ defaultAccount }}
+                />
                 <Stack.Screen name="Setting" component={Setting} />
                 <Stack.Screen name="About" component={About} />
                 <Stack.Screen name="Export" component={Export} />
