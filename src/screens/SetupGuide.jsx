@@ -149,26 +149,101 @@ const SetupGuide = ({ navigation }) => {
         }
     };
 
+    const renderHeader = () => (
+        <View style={styles.header}>
+            <TouchableOpacity 
+                style={[
+                    styles.headerButton, 
+                    { opacity: step > 1 ? 1 : 0.5 }
+                ]}
+                onPress={() => setStep(prev => prev - 1)}
+                disabled={step === 1}
+            >
+                <Icon name="chevron-back" size={24} color={theme.color} />
+                <Text style={[styles.headerButtonText, { color: theme.color }]}>Back</Text>
+            </TouchableOpacity>
+
+            <View style={styles.progressIndicator}>
+                {[...Array(2)].map((_, index) => (
+                    <View 
+                        key={index}
+                        style={[
+                            styles.progressDot,
+                            {
+                                backgroundColor: index === step - 1 ? 
+                                    theme.appThemeColor : theme.borderColor
+                            }
+                        ]}
+                    />
+                ))}
+            </View>
+
+            <TouchableOpacity 
+                style={[
+                    styles.headerButton,
+                    { backgroundColor: theme.appThemeColor }
+                ]}
+                onPress={step === 2 ? completeSetup : () => setStep(prev => prev + 1)}
+            >
+                <Text style={styles.headerButtonText}>
+                    {step === 2 ? 'Finish' : 'Next'}
+                </Text>
+                <Icon 
+                    name={step === 2 ? "checkmark" : "chevron-forward"} 
+                    size={24} 
+                    color="white" 
+                />
+            </TouchableOpacity>
+        </View>
+    );
+
     const styles = StyleSheet.create({
         container: {
             flex: 1,
             backgroundColor: theme.backgroundColor,
-            padding: 16,
         },
         header: {
-            fontSize: 24,
+            flexDirection: 'row',
+            justifyContent: 'space-between',
+            alignItems: 'center',
+            padding: 16,
+            borderBottomWidth: 1,
+            borderBottomColor: theme.borderColor,
+            elevation: 2,
+        },
+        headerButton: {
+            flexDirection: 'row',
+            alignItems: 'center',
+            padding: 8,
+            borderRadius: 8,
+        },
+        headerButtonText: {
+            fontSize: 16,
+            marginHorizontal: 4,
+            color: 'white',
+        },
+        progressIndicator: {
+            flexDirection: 'row',
+            gap: 8,
+        },
+        progressDot: {
+            width: 8,
+            height: 8,
+            borderRadius: 4,
+        },
+        content: {
+            flex: 1,
+            padding: 20,
+        },
+        stepTitle: {
+            fontSize: 22,
             fontWeight: 'bold',
+            marginBottom: 20,
+            textAlign: 'center',
             color: theme.color,
-            marginBottom: 16,
         },
         stepContainer: {
             marginBottom: 24,
-        },
-        stepTitle: {
-            fontSize: 18,
-            fontWeight: '500',
-            color: theme.color,
-            marginBottom: 12,
         },
         card: {
             backgroundColor: theme.cardBackground,
@@ -311,7 +386,6 @@ const SetupGuide = ({ navigation }) => {
             case 1:
                 return (
                     <View style={styles.stepContainer}>
-                        <Text style={styles.stepTitle}>Step 1: Configure Your Accounts</Text>
                         {accounts.map(account => (
                             <View key={account.id} style={styles.card}>
                                 <View style={styles.accountRow}>
@@ -377,7 +451,6 @@ const SetupGuide = ({ navigation }) => {
             case 2:
                 return (
                     <View style={styles.stepContainer}>
-                        <Text style={styles.stepTitle}>Step 2: Review Categories</Text>
                         <Text style={[styles.stepTitle, { fontSize: 16 }]}>Income Categories</Text>
                         {categories.income.map(category => (
                             <View key={category.id} style={styles.card}>
@@ -495,28 +568,14 @@ const SetupGuide = ({ navigation }) => {
 
     return (
         <View style={styles.container}>
-            <Text style={styles.header}>Initial Setup</Text>
-            <ScrollView>
-                {renderStep()}
-            </ScrollView>
-            <View style={styles.buttonContainer}>
-                {step > 1 && (
-                    <TouchableOpacity 
-                        style={[styles.button, { backgroundColor: theme.cardBackground }]}
-                        onPress={() => setStep(prev => prev - 1)}
-                    >
-                        <Text style={[styles.buttonText, { color: theme.color }]}>Previous</Text>
-                    </TouchableOpacity>
-                )}
-                <TouchableOpacity 
-                    style={styles.button}
-                    onPress={() => {
-                        if (step < 2) setStep(prev => prev + 1);
-                        else completeSetup();
-                    }}
-                >
-                    <Text style={styles.buttonText}>{step === 2 ? 'Complete Setup' : 'Next'}</Text>
-                </TouchableOpacity>
+            {renderHeader()}
+            <View style={styles.content}>
+                <Text style={[styles.stepTitle, { color: theme.color }]}>
+                    {step === 1 ? 'Step 1: Configure Your Accounts' : 'Step 2: Review Categories'}
+                </Text>
+                <ScrollView>
+                    {renderStep()}
+                </ScrollView>
             </View>
             <Modal
                 visible={showIconPicker}
