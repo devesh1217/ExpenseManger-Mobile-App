@@ -6,6 +6,7 @@ import CustomPicker from '../components/common/CustomPicker';
 import { fetchTransactionsByFilters, getAccounts } from '../utils/database';
 import TransectionEntry from '../components/home/Transections/TransectionEntry';
 import DateTimePicker from '@react-native-community/datetimepicker';
+import BaseTransactionItem from '../components/common/BaseTransactionItem';
 
 const Search = ({ navigation }) => {
     const { theme } = useTheme();
@@ -154,17 +155,17 @@ const Search = ({ navigation }) => {
                     onChangeText={setSearchQuery}
                     onSubmitEditing={handleSearch}
                 />
-                <TouchableOpacity 
+                <TouchableOpacity
                     style={styles.filterButton}
                     onPress={() => setShowFilters(!showFilters)}
                 >
-                    <Icon 
-                        name={showFilters ? "options" : "options-outline"} 
-                        size={24} 
+                    <Icon
+                        name={showFilters ? "options" : "options-outline"}
+                        size={24}
                         color={theme.color}
                     />
                 </TouchableOpacity>
-                <TouchableOpacity 
+                <TouchableOpacity
                     style={styles.filterButton}
                     onPress={handleSearch}
                 >
@@ -175,37 +176,37 @@ const Search = ({ navigation }) => {
             {showFilters && (
                 <View style={styles.filterContainer}>
                     <View style={styles.filterRow}>
-                        <TouchableOpacity 
+                        <TouchableOpacity
                             style={[
-                                styles.typeButton, 
+                                styles.typeButton,
                                 filters.type === 'all' && styles.activeType
                             ]}
-                            onPress={() => setFilters({...filters, type: 'all'})}
+                            onPress={() => setFilters({ ...filters, type: 'all' })}
                         >
                             <Text style={styles.typeText}>All</Text>
                         </TouchableOpacity>
-                        <TouchableOpacity 
+                        <TouchableOpacity
                             style={[
-                                styles.typeButton, 
+                                styles.typeButton,
                                 filters.type === 'income' && styles.activeType
                             ]}
-                            onPress={() => setFilters({...filters, type: 'income'})}
+                            onPress={() => setFilters({ ...filters, type: 'income' })}
                         >
                             <Text style={styles.typeText}>Income</Text>
                         </TouchableOpacity>
-                        <TouchableOpacity 
+                        <TouchableOpacity
                             style={[
-                                styles.typeButton, 
+                                styles.typeButton,
                                 filters.type === 'expense' && styles.activeType
                             ]}
-                            onPress={() => setFilters({...filters, type: 'expense'})}
+                            onPress={() => setFilters({ ...filters, type: 'expense' })}
                         >
                             <Text style={styles.typeText}>Expense</Text>
                         </TouchableOpacity>
                     </View>
 
                     <View style={styles.dateContainer}>
-                        <TouchableOpacity 
+                        <TouchableOpacity
                             style={styles.dateButton}
                             onPress={() => setShowStartDate(true)}
                         >
@@ -214,7 +215,7 @@ const Search = ({ navigation }) => {
                             </Text>
                         </TouchableOpacity>
 
-                        <TouchableOpacity 
+                        <TouchableOpacity
                             style={styles.dateButton}
                             onPress={() => setShowEndDate(true)}
                         >
@@ -228,7 +229,7 @@ const Search = ({ navigation }) => {
                         <CustomPicker
                             value={filters.account}
                             options={[{ label: 'All Accounts', value: '', icon: 'wallet' }, ...accounts]}
-                            onValueChange={(value) => setFilters({...filters, account: value})}
+                            onValueChange={(value) => setFilters({ ...filters, account: value })}
                             placeholder="Select Account"
                             visible={showAccountPicker}
                             setVisible={setShowAccountPicker}
@@ -241,7 +242,7 @@ const Search = ({ navigation }) => {
                             placeholder="Min Amount"
                             placeholderTextColor={theme.color + '80'}
                             value={filters.minAmount}
-                            onChangeText={(text) => setFilters({...filters, minAmount: text})}
+                            onChangeText={(text) => setFilters({ ...filters, minAmount: text })}
                             keyboardType="numeric"
                         />
                         <TextInput
@@ -249,7 +250,7 @@ const Search = ({ navigation }) => {
                             placeholder="Max Amount"
                             placeholderTextColor={theme.color + '80'}
                             value={filters.maxAmount}
-                            onChangeText={(text) => setFilters({...filters, maxAmount: text})}
+                            onChangeText={(text) => setFilters({ ...filters, maxAmount: text })}
                             keyboardType="numeric"
                         />
                     </View>
@@ -262,7 +263,7 @@ const Search = ({ navigation }) => {
                     mode="date"
                     onChange={(event, date) => {
                         setShowStartDate(false);
-                        if (date) setFilters({...filters, startDate: date});
+                        if (date) setFilters({ ...filters, startDate: date });
                     }}
                 />
             )}
@@ -273,7 +274,7 @@ const Search = ({ navigation }) => {
                     mode="date"
                     onChange={(event, date) => {
                         setShowEndDate(false);
-                        if (date) setFilters({...filters, endDate: date});
+                        if (date) setFilters({ ...filters, endDate: date });
                     }}
                 />
             )}
@@ -283,16 +284,20 @@ const Search = ({ navigation }) => {
                     data={results}
                     keyExtractor={(item) => item.id.toString()}
                     renderItem={({ item }) => (
-                        <TransectionEntry 
-                            entry={item}
+                        <TouchableOpacity
                             onPress={() => navigation.navigate('Home', { targetDate: item.date })}
-                        />
+                        >
+                            <BaseTransactionItem
+                                transaction={item}
+                            />
+                        </TouchableOpacity>
                     )}
                     ListHeaderComponent={
                         <Text style={styles.resultText}>
                             Found {results.length} transactions
                         </Text>
                     }
+                    style={{ padding: 16 }}
                 />
             ) : (
                 <Text style={styles.noResults}>
