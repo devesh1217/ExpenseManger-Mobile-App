@@ -2,7 +2,6 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 
 export const saveFormState = async (type, formData) => {
     try {
-        console.log(type, formData);
         await AsyncStorage.setItem(`@form_${type}`, JSON.stringify(formData));
     } catch (error) {
         console.error('Error saving form state:', error);

@@ -581,8 +581,6 @@ export const fetchTransactionsByFilters = (query, filters) => {
         ? `WHERE ${conditions.join(' AND ')}` 
         : '';
 
-      console.log('SQL Query:', `SELECT * FROM Transactions ${whereClause} ORDER BY date DESC;`);
-      console.log('Params:', params);
 
       tx.executeSql(
         `SELECT * FROM Transactions ${whereClause} ORDER BY date DESC;`,

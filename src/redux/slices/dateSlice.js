@@ -7,7 +7,6 @@ const dateSlice = createSlice({
     },
     reducers: {
         increment: (state) => {
-            console.log(state, 'hi')
             state.value += 1;
         },
         decrement: (state) => {

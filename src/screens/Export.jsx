@@ -117,12 +117,10 @@ const Export = ({ navigation }) => {
     };
 
     const handleAccountPress = () => {
-        console.log('Account picker opened');  // Debug log
         setShowAccountPicker(true);
     };
 
     const handleCategoryPress = () => {
-        console.log('Category picker opened');  // Debug log
         setShowCategoryPicker(true);
     };
 
@@ -134,8 +132,6 @@ const Export = ({ navigation }) => {
                 accounts: selectedAccounts,
                 categories: selectedCategories,
             };
-
-            console.log('Export filters:', filterParams); // Debug log
 
             const transactions = await fetchTransactionsByFilters('', filterParams);
 
@@ -647,7 +643,6 @@ const Export = ({ navigation }) => {
                             source={{ uri: `file://${pdfPreview}` }}
                             style={{ flex: 1, width: '100%' }}
                             onLoadComplete={(numberOfPages, filePath) => {
-                                console.log(`Number of pages: ${numberOfPages}`);
                             }}
                             onError={(error) => {
                                 console.error('PDF Error:', error);

@@ -45,7 +45,6 @@ const ExpenseForm = ({ onClose, navigation }) => {
 
     // Save form changes with proper dependency
     useEffect(() => {
-        console.log('Saving expense form:', expenseForm); // Debug log
         if (expenseForm.title || expenseForm.description || expenseForm.amount || expenseForm.sentTo) {
             saveFormState('expense', expenseForm);
         }

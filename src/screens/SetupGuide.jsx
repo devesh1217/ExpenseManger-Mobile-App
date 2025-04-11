@@ -80,7 +80,6 @@ const SetupGuide = ({ navigation }) => {
             );
             await loadInitialData();
         } catch (error) {
-            console.log(error);
             Alert.alert('Error', error.message || 'Failed to update account');
         }
     };

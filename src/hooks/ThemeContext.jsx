@@ -37,8 +37,6 @@ export const ThemeProvider = ({ children, defaultAccount }) => {
     const [theme, setTheme] = useState(themes[colorScheme] || themes.light);
 
     useEffect(() => {
-        console.log('System theme changed to:', colorScheme);
-        // Ensure the theme state is updated correctly
         if (colorScheme === 'dark' || colorScheme === 'light') {
             setTheme(themes[colorScheme]);
         }
