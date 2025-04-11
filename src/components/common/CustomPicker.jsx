@@ -13,6 +13,43 @@ const CustomPicker = ({
 }) => {
     const { theme } = useTheme();
     const styles = StyleSheet.create({
+        button: {
+            flex: 1,
+            flexDirection: 'row',
+            alignItems: 'center',
+            padding: 12,
+            borderRadius: 8,
+            backgroundColor: theme.cardBackground,
+            borderWidth: 1,
+            borderColor: theme.borderColor,
+        },
+        buttonText: {
+            color: theme.color,
+            flex: 1,
+            fontSize: 16,
+        },
+        modalContent: {
+            backgroundColor: theme.backgroundColor,
+            borderRadius: 12,
+            padding: 16,
+            width: '80%',
+            maxHeight: '80%',
+        },
+        option: {
+            flexDirection: 'row',
+            alignItems: 'center',
+            padding: 16,
+            borderRadius: 8,
+            marginVertical: 4,
+        },
+        selectedOption: {
+            backgroundColor: theme.appThemeColor + '20',
+        },
+        optionText: {
+            color: theme.color,
+            marginLeft: 12,
+            fontSize: 16,
+        },
         pickerButton: {
             flexDirection: 'row',
             alignItems: 'center',
@@ -58,21 +95,6 @@ const CustomPicker = ({
             padding: 16,
             borderBottomWidth: 1,
             borderBottomColor: theme.borderColor,
-        },
-        selectedOption: {
-            backgroundColor: theme.appThemeColor + '20',
-        },
-        optionText: {
-            color: theme.color,
-            fontSize: 16,
-            marginLeft: 12,
-        },
-        modalContent: {
-            backgroundColor: theme.backgroundColor,
-            borderRadius: 12,
-            padding: 16,
-            width: '80%',
-            maxHeight: '80%', // Limit height to 80% of screen
         },
         optionsContainer: {
             flexGrow: 0, // Prevents ScrollView from expanding beyond content

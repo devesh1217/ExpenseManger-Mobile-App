@@ -10,6 +10,7 @@ import CustomPicker from '../../common/CustomPicker';
 import { getAccounts, getCategories, getMostFrequentCategory } from '../../../../src/utils/database';
 import { useNavigation, useRoute } from '@react-navigation/native';
 import { saveFormState, loadFormState, clearFormState } from '../../../utils/formStorage';
+import Icon from 'react-native-vector-icons/Ionicons';
 
 const ExpenseForm = ({ onClose, navigation }) => {
     const { theme } = useTheme();
@@ -30,6 +31,12 @@ const ExpenseForm = ({ onClose, navigation }) => {
     const [showCategoryPicker, setShowCategoryPicker] = useState(false);
     const [customAccounts, setCustomAccounts] = useState([]);
     const [customCategories, setCustomCategories] = useState([]);
+
+    // Add refs for input fields
+    const titleRef = React.useRef();
+    const descriptionRef = React.useRef();
+    const amountRef = React.useRef();
+    const sentToRef = React.useRef();
 
     // Load saved form first, then load options
     useEffect(() => {
@@ -84,54 +91,62 @@ const ExpenseForm = ({ onClose, navigation }) => {
         form: {
             width: '100%',
             justifyContent: 'start',
-            alignItems: 'center',
-            padding: 15,
-            gap: 10
+            alignItems: 'stretch',
+            padding: 20,
+            gap: 15
         },
-        text: {
-            color: 'white',
-            fontSize: 18
+        inputGroup: {
+            marginBottom: 15,
+        },
+        label: {
+            color: theme.color,
+            marginBottom: 5,
+            fontSize: 14,
+            fontWeight: '500',
         },
         input: {
             width: '100%',
-            borderBottomColor: '#056655',
-            borderBottomWidth: 3,
-            color: theme.color
+            borderWidth: 1,
+            borderColor: theme.borderColor,
+            borderRadius: 8,
+            paddingHorizontal: 12,
+            paddingVertical: 10,
+            color: theme.color,
+            backgroundColor: theme.cardBackground,
+            fontSize: 16,
         },
-        textCenter: {
-            textAlign: 'center'
-        },
-        btnWrapper: {
-            display: 'flex',
+        inputWithIcon: {
             flexDirection: 'row',
-            justifyContent: 'space-evenly',
-            alignContent: 'center',
-            borderRadius: 50,
-            width: '100%',
-            overflow: 'hidden'
+            alignItems: 'center',
+            borderWidth: 1,
+            borderColor: theme.borderColor,
+            borderRadius: 8,
+            backgroundColor: theme.cardBackground,
         },
-        btn: {
-            backgroundColor: '#777',
-            width: '50%',
-            borderRadius: 30,
-            padding: 5
-        },
-        picker: {
-            width: '100%',
-            color: theme.color,
-            backgroundColor: 'rgba(5, 102, 85, 0.1)',
-            borderRadius: 5,
-            marginVertical: 5,
-        },
-        pickerItem: {
+        icon: {
+            padding: 10,
             color: theme.color,
         },
-
         pickerContainer: {
-            width: '100%',
             flexDirection: 'row',
             justifyContent: 'space-between',
-        }
+            gap: 10,
+            marginBottom: 15,
+        },
+        btnWrapper: {
+            marginTop: 10,
+        },
+        btn: {
+            backgroundColor: theme.appThemeColor,
+            borderRadius: 8,
+            padding: 15,
+            alignItems: 'center',
+        },
+        text: {
+            color: 'white',
+            fontSize: 16,
+            fontWeight: '600',
+        },
     });
 
     const handleSubmit = () => {
@@ -160,60 +175,113 @@ const ExpenseForm = ({ onClose, navigation }) => {
     };
 
     return (
-        <View style={[styles.form]}>
-            <TextInput
-                placeholder='Title'
-                style={[styles.input]}
-                value={expenseForm.title}
-                onChangeText={(value) => setExpenseForm({ ...expenseForm, title: value })}
-            />
-            <TextInput
-                placeholder='Description'
-                style={[styles.input]}
-                value={expenseForm.description}
-                onChangeText={(value) => setExpenseForm({ ...expenseForm, description: value })}
-            />
-            <TextInput
-                placeholder='Amount'
-                style={[styles.input]}
-                value={expenseForm.amount.toString()}
-                keyboardType='numeric'
-                onChangeText={(value) => setExpenseForm({ ...expenseForm, amount: value })}
-            />
-            <View style={[styles.pickerContainer]} >
+        <View style={styles.form}>
+            <View style={styles.inputGroup}>
+                <Text style={styles.label}>Title</Text>
+                <View style={styles.inputWithIcon}>
+                    <Icon name="pencil" size={20} style={styles.icon} />
+                    <TextInput
+                        ref={titleRef}
+                        placeholder='Enter title'
+                        style={[styles.input, { flex: 1, borderWidth: 0 }]}
+                        placeholderTextColor={theme.color + '80'}
+                        value={expenseForm.title}
+                        onChangeText={(value) => setExpenseForm({ ...expenseForm, title: value })}
+                        returnKeyType="next"
+                        onSubmitEditing={() => descriptionRef.current?.focus()}
+                        blurOnSubmit={false}
+                    />
+                </View>
+            </View>
 
+            <View style={styles.inputGroup}>
+                <Text style={styles.label}>Description</Text>
+                <View style={styles.inputWithIcon}>
+                    <Icon name="document-text" size={20} style={styles.icon} />
+                    <TextInput
+                        ref={descriptionRef}
+                        placeholder='Enter description'
+                        style={[styles.input, { flex: 1, borderWidth: 0 }]}
+                        placeholderTextColor={theme.color + '80'}
+                        value={expenseForm.description}
+                        onChangeText={(value) => setExpenseForm({ ...expenseForm, description: value })}
+                        returnKeyType="next"
+                        onSubmitEditing={() => amountRef.current?.focus()}
+                        blurOnSubmit={false}
+                    />
+                </View>
+            </View>
+
+            <View style={styles.inputGroup}>
+                <Text style={styles.label}>Amount</Text>
+                <View style={styles.inputWithIcon}>
+                    <Icon name="cash" size={20} style={styles.icon} />
+                    <TextInput
+                        ref={amountRef}
+                        placeholder='Enter amount'
+                        style={[styles.input, { flex: 1, borderWidth: 0 }]}
+                        placeholderTextColor={theme.color + '80'}
+                        value={expenseForm.amount.toString()}
+                        keyboardType='numeric'
+                        onChangeText={(value) => setExpenseForm({ ...expenseForm, amount: value })}
+                        returnKeyType="next"
+                        onSubmitEditing={() => {
+                            setShowAccountPicker(true);
+                        }}
+                        blurOnSubmit={false}
+                    />
+                </View>
+            </View>
+
+            <View style={styles.pickerContainer}>
                 <CustomPicker
                     value={expenseForm.account}
                     options={customAccounts}
                     onValueChange={(value) => setExpenseForm({ ...expenseForm, account: value })}
-                    placeholder="Select Account"
+                    placeholder="Account"
                     visible={showAccountPicker}
                     setVisible={setShowAccountPicker}
                 />
-
                 <CustomPicker
                     value={expenseForm.category}
                     options={customCategories}
                     onValueChange={(value) => setExpenseForm({ ...expenseForm, category: value })}
-                    placeholder="Select Category"
+                    placeholder="Category"
                     visible={showCategoryPicker}
                     setVisible={setShowCategoryPicker}
                 />
-
             </View>
-            <TextInput
-                placeholder='SentTo'
-                style={[styles.input]}
-                value={expenseForm.sentTo}
-                onChangeText={(value) => setExpenseForm({ ...expenseForm, sentTo: value })}
-            />
-            <View style={[styles.btnWrapper]}>
-                <Pressable style={[styles.btn]} onPress={handleSubmit}>
-                    <Text style={[styles.text, styles.textCenter]} >Submit</Text>
+
+            <View style={styles.inputGroup}>
+                <Text style={styles.label}>Sent To</Text>
+                <View style={styles.inputWithIcon}>
+                    <Icon name="send" size={20} style={styles.icon} />
+                    <TextInput
+                        ref={sentToRef}
+                        placeholder='Enter recipient'
+                        style={[styles.input, { flex: 1, borderWidth: 0 }]}
+                        placeholderTextColor={theme.color + '80'}
+                        value={expenseForm.sentTo}
+                        onChangeText={(value) => setExpenseForm({ ...expenseForm, sentTo: value })}
+                        returnKeyType="done"
+                        onSubmitEditing={handleSubmit}
+                    />
+                </View>
+            </View>
+
+            <View style={styles.btnWrapper}>
+                <Pressable 
+                    style={({ pressed }) => [
+                        styles.btn,
+                        { opacity: pressed ? 0.8 : 1 }
+                    ]}
+                    onPress={handleSubmit}
+                >
+                    <Text style={styles.text}>Save Expense</Text>
                 </Pressable>
             </View>
         </View>
-    )
+    );
 }
 
 export default ExpenseForm;
