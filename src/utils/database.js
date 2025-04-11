@@ -1,5 +1,6 @@
 import SQLite from 'react-native-sqlite-storage';
 import { addDays } from 'date-fns';
+import { defaultIncomeCategories, defaultExpenseCategories } from '../constants/formOptions';
 
 const db = SQLite.openDatabase(
   {
@@ -68,26 +69,6 @@ export const createTables = () => {
         UNIQUE(name, type)
       );
     `);
-
-    // Insert default income categories with Others first (permanent)
-    const defaultIncomeCategories = [
-      ['Others', 'add-circle', 'income', 1, 1],  // Permanent default category
-      ['Salary', 'cash', 'income', 1, 0],
-      ['Business', 'business', 'income', 1, 0],
-      ['Investment', 'trending-up', 'income', 1, 0],
-      ['Freelance', 'laptop', 'income', 1, 0]
-    ];
-
-    // Update the defaultExpenseCategories array in createTables function
-    const defaultExpenseCategories = [
-      ['Others', 'remove-circle', 'expense', 1, 1],  // Permanent default category
-      ['Food', 'restaurant', 'expense', 1, 0],
-      ['Transport', 'car', 'expense', 1, 0],
-      ['Shopping', 'cart', 'expense', 1, 0],
-      ['Bills', 'receipt', 'expense', 1, 0],
-      ['Entertainment', 'game-controller', 'expense', 1, 0],
-      ['Health', 'medical', 'expense', 1, 0]
-    ];
 
     // Insert all default categories
     [...defaultIncomeCategories, ...defaultExpenseCategories].forEach(category => {

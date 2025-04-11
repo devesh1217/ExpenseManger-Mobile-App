@@ -89,6 +89,34 @@ export const accountIcons = [
     'umbrella-outline',
     'toggle-outline',
 
+    // Food & Groceries
+    'nutrition-outline',
+    'leaf-outline',
+    'basket-outline',
+    'fast-food-outline',
+    'fish-outline',
+    'egg-outline',
+    'ice-cream-outline',
+    'cafe-outline',
+    'pizza-outline',
+    'beer-outline',
+    'water-outline',
+    'cart-outline',
+
+    // Household & Daily Life
+    'shirt-outline',
+    'cut-outline',
+    'bed-outline',
+    'today-outline',
+    'storefront-outline',
+    'sync-outline',
+    'thermometer-outline',
+    'timer-outline',
+    'tissue-outline',
+    'trash-outline',
+    'download-outline',
+    'extension-puzzle-outline',
+
     // Others
     'people-outline',
     'person-outline',
