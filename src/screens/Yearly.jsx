@@ -1,16 +1,18 @@
-import { View, Text, StyleSheet, TouchableOpacity, Modal, FlatList, ScrollView } from 'react-native';
+import { View, Text, StyleSheet, TouchableOpacity, Modal, FlatList, ScrollView, Dimensions } from 'react-native';
 import React, { useState, useEffect } from 'react';
 import { useTheme } from '../hooks/ThemeContext';
 import MaterialIcons from 'react-native-vector-icons/MaterialIcons';
 import { fetchMonthlyTransactions } from '../utils/database';
 import CustomPicker from '../components/common/CustomPicker';
 import { useFocusEffect } from '@react-navigation/native';
+import { BarChart } from 'react-native-gifted-charts';
 
 const Yearly = ({ navigation, route }) => {
     const { theme } = useTheme();
     const [selectedYear, setSelectedYear] = useState(new Date().getFullYear());
     const [showYearPicker, setShowYearPicker] = useState(false);
     const [monthlyData, setMonthlyData] = useState([]);
+    const [selectedBar, setSelectedBar] = useState(null);
 
     const years = Array.from(
         { length: 5 },
@@ -211,6 +213,34 @@ const Yearly = ({ navigation, route }) => {
             borderBottomWidth: 1,
             borderBottomColor: theme.borderColor,
             paddingBottom: 8,
+        },
+        chartContainer: {
+            margin: 16,
+            padding: 16,
+            backgroundColor: theme.cardBackground,
+            borderRadius: 12,
+            elevation: 3,
+            overflow: 'hidden',
+            paddingVertical: 32
+        },
+        legendContainer: {
+            flexDirection: 'row',
+            justifyContent: 'center',
+            marginTop: 16,
+        },
+        legendItem: {
+            flexDirection: 'row',
+            alignItems: 'center',
+            marginHorizontal: 8,
+        },
+        legendDot: {
+            width: 12,
+            height: 12,
+            borderRadius: 6,
+            marginRight: 8,
+        },
+        legendText: {
+            fontSize: 14,
         }
     });
 
@@ -222,6 +252,53 @@ const Yearly = ({ navigation, route }) => {
         }),
         { income: 0, expense: 0, balance: 0 }
     );
+
+    const prepareBarData = () => {
+        if (!monthlyData.length) return [];
+        
+        const barData = [];
+        monthlyData.forEach((month, index) => {
+            // Add income bar
+            barData.push({
+                value: month.income,
+                label: String(index + 1).padStart(2, '0'),
+                frontColor: '#4CAF50',
+                spacing: 2,
+            });
+            // Add expense bar right next to income
+            barData.push({
+                value: month.expense,
+                frontColor: '#EF5350',
+                spacing: 12,
+            });
+        });
+        return barData;
+    };
+
+    const renderTooltip = (item, index) => {
+        const isIncome = index % 2 === 0;
+        const monthIndex = Math.floor(index / 2);
+        return (
+            <View style={{
+                backgroundColor: theme.cardBackground,
+                padding: 8,
+                borderRadius: 4,
+                elevation: 2,
+                borderLeftWidth: 3,
+                borderLeftColor: isIncome ? '#4CAF50' : '#EF5350'
+            }}>
+                <Text style={{ color: theme.color, fontSize: 12 }}>
+                    {months[monthIndex]}
+                </Text>
+                <Text style={{ 
+                    color: isIncome ? '#4CAF50' : '#EF5350',
+                    fontWeight: '600'
+                }}>
+                    ₹{item.value.toFixed(2)}
+                </Text>
+            </View>
+        );
+    };
 
     return (
         <ScrollView 
@@ -253,6 +330,51 @@ const Yearly = ({ navigation, route }) => {
                     <Text style={styles.expense}>-₹{yearTotal.expense.toFixed(2)}</Text>
                 </View>
                 <Text style={styles.totalAmount}>₹{yearTotal.balance.toFixed(2)}</Text>
+            </View>
+
+            <View style={styles.chartContainer}>
+                <BarChart
+                    data={prepareBarData()}
+                    barWidth={15}
+                    spacing={2}
+                    roundedTop
+                    xAxisThickness={1}
+                    yAxisThickness={1}
+                    yAxisTextStyle={{ color: theme.color }}
+                    xAxisLabelTextStyle={{ color: theme.color }}
+                    yAxisLabelPrefix='₹'
+                    showYAxisIndices
+                    showXAxisIndices
+                    noOfSections={5}
+                    xAxisColor={theme.color}
+                    yAxisColor={theme.color}
+                    xAxisIndicesColor={theme.color}
+                    yAxisIndicesColor={theme.color}
+                    maxValue={Math.max(...monthlyData.map(item => 
+                        Math.max(item.income || 0, item.expense || 0)
+                    )) * 1.1}
+                    labelWidth={30}
+                    height={250}
+                    overflowTop={20}
+                    width={250}
+                    yAxisLabelWidth={50}
+                    onPress={(item, index) => setSelectedBar(index)}
+                    renderTooltip={renderTooltip}
+                    activeOpacity={0.7}
+                    focusBarOnPress={true}
+                    isAnimated={true}
+
+                />
+                <View style={styles.legendContainer}>
+                    <View style={styles.legendItem}>
+                        <View style={[styles.legendDot, { backgroundColor: '#4CAF50' }]} />
+                        <Text style={[styles.legendText, { color: theme.color }]}>Income</Text>
+                    </View>
+                    <View style={styles.legendItem}>
+                        <View style={[styles.legendDot, { backgroundColor: '#EF5350' }]} />
+                        <Text style={[styles.legendText, { color: theme.color }]}>Expense</Text>
+                    </View>
+                </View>
             </View>
 
             <FlatList
