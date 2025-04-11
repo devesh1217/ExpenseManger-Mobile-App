@@ -59,6 +59,8 @@ const MainStack = () => {
           tabBarStyle: {
             backgroundColor: theme.backgroundColor,
             borderTopColor: theme.borderColor,
+            paddingTop: 6,
+            marginBottom: 12,
           },
           headerShown: false,
         })}
