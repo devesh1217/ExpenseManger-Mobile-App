@@ -15,18 +15,17 @@ const ExpenseForm = ({ onClose, navigation }) => {
     const counter = useSelector((state) => state.date.value);
     const dispatch = useDispatch();
     const route = useRoute();
-    const defaultAccount = route.params?.defaultAccount || 'Cash';
     const [customAccounts, setCustomAccounts] = useState([]);
     const [customCategories, setCustomCategories] = useState([]);
 
     useEffect(() => {
         loadCustomOptions();
+        console.log(expenseForm)
     }, []);
 
     const loadCustomOptions = async () => {
         const accounts = await getAccounts();
         const categories = await getCategories();
-        console.log(accounts)
         setCustomAccounts(accounts.map(acc => ({
             label: acc.name,
             value: acc.name,
@@ -37,6 +36,7 @@ const ExpenseForm = ({ onClose, navigation }) => {
             value: cat.name,
             icon: cat.icon || 'remove-circle-outline'
         })));
+        setExpenseForm({...expenseForm, account: accounts.find(acc => acc.isDefault === 1)?.name});
     };
 
     const styles = StyleSheet.create({
@@ -97,7 +97,7 @@ const ExpenseForm = ({ onClose, navigation }) => {
         title: '',
         description: '',
         amount: 0,
-        account: defaultAccount,
+        account: 'Cash',
         category: '',
         sentTo: '',
     });

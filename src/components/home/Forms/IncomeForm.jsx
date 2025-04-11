@@ -12,7 +12,6 @@ import { useNavigation, useRoute } from '@react-navigation/native';
 const IncomeForm = ({ onClose, navigation }) => {
     const { theme } = useTheme();
     const route = useRoute();
-    const defaultAccount = route.params?.defaultAccount || 'Cash';
 
     const styles = StyleSheet.create({
         form: {
@@ -71,7 +70,7 @@ const IncomeForm = ({ onClose, navigation }) => {
         title: '',
         description: '',
         amount: 0,
-        account: defaultAccount,
+        account: 'Cash',
         category: '',
         type: '',
     });
@@ -98,6 +97,7 @@ const IncomeForm = ({ onClose, navigation }) => {
             value: cat.name,
             icon: cat.icon || 'add-circle-outline'
         })));
+        setIncomeForm({...incomeForm, account: accounts.find(acc => acc.isDefault === 1)?.name});
     };
 
     const counter = useSelector((state) => state.date.value);
