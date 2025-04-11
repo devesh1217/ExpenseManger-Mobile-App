@@ -599,3 +599,27 @@ export const fetchTransactionsByFilters = (query, filters) => {
     });
   });
 };
+
+export const getMostFrequentCategory = (type) => {
+  return new Promise((resolve, reject) => {
+    db.transaction(tx => {
+      tx.executeSql(
+        `SELECT category, COUNT(*) as count 
+         FROM Transactions 
+         WHERE type = ? 
+         GROUP BY category 
+         ORDER BY count DESC 
+         LIMIT 1;`,
+        [type],
+        (_, results) => {
+          if (results.rows.length > 0) {
+            resolve(results.rows.item(0).category);
+          } else {
+            resolve('Others'); // Default to Others if no transactions exist
+          }
+        },
+        (_, error) => reject(error)
+      );
+    });
+  });
+};

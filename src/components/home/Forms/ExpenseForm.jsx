@@ -7,7 +7,7 @@ import { useTheme } from '../../../hooks/ThemeContext';
 import { useSelector, useDispatch } from 'react-redux';
 import { addExpense } from '../../../../src/redux/slices/transactionSlice';
 import CustomPicker from '../../common/CustomPicker';
-import { getAccounts, getCategories } from '../../../../src/utils/database';
+import { getAccounts, getCategories, getMostFrequentCategory } from '../../../../src/utils/database';
 import { useNavigation, useRoute } from '@react-navigation/native';
 
 const ExpenseForm = ({ onClose, navigation }) => {
@@ -24,19 +24,33 @@ const ExpenseForm = ({ onClose, navigation }) => {
     }, []);
 
     const loadCustomOptions = async () => {
-        const accounts = await getAccounts();
-        const categories = await getCategories();
-        setCustomAccounts(accounts.map(acc => ({
-            label: acc.name,
-            value: acc.name,
-            icon: acc.icon || 'wallet-outline'
-        })));
-        setCustomCategories(categories.expense.map(cat => ({
-            label: cat.name,
-            value: cat.name,
-            icon: cat.icon || 'remove-circle-outline'
-        })));
-        setExpenseForm({...expenseForm, account: accounts.find(acc => acc.isDefault === 1)?.name});
+        try {
+            const [accounts, categories, mostFreqCategory] = await Promise.all([
+                getAccounts(),
+                getCategories(),
+                getMostFrequentCategory('expense')
+            ]);
+            
+            setCustomAccounts(accounts.map(acc => ({
+                label: acc.name,
+                value: acc.name,
+                icon: acc.icon || 'wallet-outline'
+            })));
+            
+            setCustomCategories(categories.expense.map(cat => ({
+                label: cat.name,
+                value: cat.name,
+                icon: cat.icon || 'add-circle-outline'
+            })));
+
+            setExpenseForm(prev => ({
+                ...prev,
+                account: accounts.find(acc => acc.isDefault === 1)?.name || 'Cash',
+                category: mostFreqCategory
+            }));
+        } catch (error) {
+            console.error('Error loading options:', error);
+        }
     };
 
     const styles = StyleSheet.create({

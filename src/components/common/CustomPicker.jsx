@@ -1,5 +1,5 @@
 import React from 'react';
-import { View, Text, TouchableOpacity, Modal, StyleSheet } from 'react-native';
+import { View, Text, TouchableOpacity, Modal, StyleSheet, ScrollView } from 'react-native';
 import { useTheme } from '../../hooks/ThemeContext';
 import Icon from 'react-native-vector-icons/Ionicons';
 
@@ -66,6 +66,16 @@ const CustomPicker = ({
             color: theme.color,
             fontSize: 16,
             marginLeft: 12,
+        },
+        modalContent: {
+            backgroundColor: theme.backgroundColor,
+            borderRadius: 12,
+            padding: 16,
+            width: '80%',
+            maxHeight: '80%', // Limit height to 80% of screen
+        },
+        optionsContainer: {
+            flexGrow: 0, // Prevents ScrollView from expanding beyond content
         }
     });
 
@@ -94,26 +104,28 @@ const CustomPicker = ({
                     activeOpacity={1}
                     onPress={() => setVisible(false)}
                 >
-                    <View style={styles.pickerContainer}>
+                    <View style={styles.modalContent}>
                         <View style={styles.pickerHeader}>
                             <Text style={styles.pickerTitle}>{placeholder}</Text>
                         </View>
-                        {options.map((option) => (
-                            <TouchableOpacity
-                                key={option.value}
-                                style={[
-                                    styles.optionItem,
-                                    value === option.value && styles.selectedOption
-                                ]}
-                                onPress={() => {
-                                    onValueChange(option.value);
-                                    setVisible(false);
-                                }}
-                            >
-                                <Icon name={option.icon} size={20} color={theme.color} />
-                                <Text style={styles.optionText}>{option.label}</Text>
-                            </TouchableOpacity>
-                        ))}
+                        <ScrollView style={styles.optionsContainer}>
+                            {options.map((option) => (
+                                <TouchableOpacity
+                                    key={option.value}
+                                    style={[
+                                        styles.optionItem,
+                                        value === option.value && styles.selectedOption
+                                    ]}
+                                    onPress={() => {
+                                        onValueChange(option.value);
+                                        setVisible(false);
+                                    }}
+                                >
+                                    <Icon name={option.icon} size={20} color={theme.color} />
+                                    <Text style={styles.optionText}>{option.label}</Text>
+                                </TouchableOpacity>
+                            ))}
+                        </ScrollView>
                     </View>
                 </TouchableOpacity>
             </Modal>
