@@ -8,6 +8,7 @@ import { addIncome } from '../../../../src/redux/slices/transactionSlice';
 import CustomPicker from '../../common/CustomPicker';
 import { getAccounts, getCategories, getMostFrequentCategory } from '../../../../src/utils/database';
 import { useNavigation, useRoute } from '@react-navigation/native';
+import { saveFormState, loadFormState, clearFormState } from '../../../utils/formStorage';
 
 const IncomeForm = ({ onClose, navigation }) => {
     const { theme } = useTheme();
@@ -82,6 +83,7 @@ const IncomeForm = ({ onClose, navigation }) => {
 
     useEffect(() => {
         loadCustomOptions();
+        loadSavedForm();
     }, []);
 
     const loadCustomOptions = async () => {
@@ -114,6 +116,18 @@ const IncomeForm = ({ onClose, navigation }) => {
         }
     };
 
+    const loadSavedForm = async () => {
+        const savedForm = await loadFormState('income');
+        if (savedForm) {
+            setIncomeForm(savedForm);
+        }
+    };
+
+    // Add effect to save form changes
+    useEffect(() => {
+        saveFormState('income', incomeForm);
+    }, [incomeForm]);
+
     const counter = useSelector((state) => state.date.value);
     const dispatch = useDispatch();
 
@@ -128,6 +142,9 @@ const IncomeForm = ({ onClose, navigation }) => {
         };
         insertTransaction(transaction, counter);
         dispatch(addIncome(transaction)); // Update Redux store
+        
+        // Clear saved form after successful submission
+        clearFormState('income');
         
         // Force reload of Monthly and Yearly screens
         if (navigation) {

@@ -9,19 +9,47 @@ import { addExpense } from '../../../../src/redux/slices/transactionSlice';
 import CustomPicker from '../../common/CustomPicker';
 import { getAccounts, getCategories, getMostFrequentCategory } from '../../../../src/utils/database';
 import { useNavigation, useRoute } from '@react-navigation/native';
+import { saveFormState, loadFormState, clearFormState } from '../../../utils/formStorage';
 
 const ExpenseForm = ({ onClose, navigation }) => {
     const { theme } = useTheme();
     const counter = useSelector((state) => state.date.value);
     const dispatch = useDispatch();
     const route = useRoute();
+
+    // Move state initialization to top
+    const [expenseForm, setExpenseForm] = useState({
+        title: '',
+        description: '',
+        amount: '',  // Change to string for proper state updates
+        account: 'Cash',
+        category: '',
+        sentTo: '',
+    });
+    const [showAccountPicker, setShowAccountPicker] = useState(false);
+    const [showCategoryPicker, setShowCategoryPicker] = useState(false);
     const [customAccounts, setCustomAccounts] = useState([]);
     const [customCategories, setCustomCategories] = useState([]);
 
+    // Load saved form first, then load options
     useEffect(() => {
-        loadCustomOptions();
-        console.log(expenseForm)
+        const initForm = async () => {
+            const savedForm = await loadFormState('expense');
+            if (savedForm) {
+                setExpenseForm(savedForm);
+            }
+            await loadCustomOptions();
+        };
+        initForm();
     }, []);
+
+    // Save form changes with proper dependency
+    useEffect(() => {
+        console.log('Saving expense form:', expenseForm); // Debug log
+        if (expenseForm.title || expenseForm.description || expenseForm.amount || expenseForm.sentTo) {
+            saveFormState('expense', expenseForm);
+        }
+    }, [expenseForm.title, expenseForm.description, expenseForm.amount, expenseForm.category, expenseForm.account, expenseForm.sentTo]);
 
     const loadCustomOptions = async () => {
         try {
@@ -107,18 +135,6 @@ const ExpenseForm = ({ onClose, navigation }) => {
         }
     });
 
-    const [expenseForm, setExpenseForm] = useState({
-        title: '',
-        description: '',
-        amount: 0,
-        account: 'Cash',
-        category: '',
-        sentTo: '',
-    });
-
-    const [showAccountPicker, setShowAccountPicker] = useState(false);
-    const [showCategoryPicker, setShowCategoryPicker] = useState(false);
-
     const handleSubmit = () => {
         const transaction = {
             title: expenseForm.title,
@@ -130,6 +146,8 @@ const ExpenseForm = ({ onClose, navigation }) => {
         };
         insertTransaction(transaction, counter);
         dispatch(addExpense(transaction));
+        
+        clearFormState('expense');
         
         if (navigation) {
             navigation.navigate('Monthly', { reload: Date.now() });
