@@ -21,6 +21,7 @@ const SetupGuide = ({ navigation }) => {
     const [newAccountIcon, setNewAccountIcon] = useState('wallet-outline');
     const [newCategoryIcon, setNewCategoryIcon] = useState('add-circle-outline');
     const [hasBackup, setHasBackup] = useState(false);
+    const [editingAccount, setEditingAccount] = useState(null);
 
     useEffect(() => {
         loadInitialData();
@@ -68,13 +69,19 @@ const SetupGuide = ({ navigation }) => {
         setHasBackup(false);
     };
 
-    const handleAccountBalanceUpdate = async (id, balance) => {
+    const handleAccountBalanceUpdate = async (id, balance, name = null, icon = null) => {
         try {
-            await updateAccount(id, accounts.find(a => a.id === id).name, 
-                              accounts.find(a => a.id === id).icon, balance);
+            const account = accounts.find(a => a.id === id);
+            await updateAccount(
+                id, 
+                name || account.name, 
+                icon || account.icon, 
+                parseFloat(balance) || 0
+            );
             await loadInitialData();
         } catch (error) {
-            Alert.alert('Error', error.message);
+            console.log(error);
+            Alert.alert('Error', error.message || 'Failed to update account');
         }
     };
 
@@ -89,7 +96,19 @@ const SetupGuide = ({ navigation }) => {
 
     const handleIconSelect = (icon) => {
         if (currentEditingForm === 'account') {
-            setNewAccountIcon(icon);
+            if (editingAccount) {
+                // Update existing account's icon
+                handleAccountBalanceUpdate(
+                    editingAccount.id,
+                    editingAccount.openingBalance,
+                    editingAccount.name,
+                    icon
+                );
+                setEditingAccount(null);
+            } else {
+                // For new account
+                setNewAccountIcon(icon);
+            }
         } else if (currentEditingForm === 'category') {
             setNewCategoryIcon(icon);
         }
@@ -299,8 +318,24 @@ const SetupGuide = ({ navigation }) => {
                                 <View style={styles.accountRow}>
                                     <View style={styles.accountInfo}>
                                         <Icon name={account.icon} size={24} color={theme.color} />
-                                        <Text style={styles.accountName}>{account.name}</Text>
+                                        <TextInput
+                                            style={[styles.accountName, { flex: 1 }]}
+                                            value={account.name}
+                                            onChangeText={(text) => 
+                                                handleAccountBalanceUpdate(account.id, account.openingBalance, text, account.icon)
+                                            }
+                                            editable={!account.isPermanent}
+                                        />
                                     </View>
+                                    <TouchableOpacity
+                                        onPress={() => {
+                                            setCurrentEditingForm('account');
+                                            setEditingAccount(account);
+                                            setShowIconPicker(true);
+                                        }}
+                                    >
+                                        <Icon name="create-outline" size={24} color={theme.color} />
+                                    </TouchableOpacity>
                                     {!account.isPermanent && (
                                         <TouchableOpacity onPress={() => handleAccountDelete(account.id)}>
                                             <Icon name="trash-outline" size={24} color="#EF5350" />
@@ -313,7 +348,7 @@ const SetupGuide = ({ navigation }) => {
                                     placeholderTextColor={theme.color + '80'}
                                     keyboardType="numeric"
                                     defaultValue={account.openingBalance?.toString()}
-                                    onEndEditing={(e) => handleAccountBalanceUpdate(account.id, parseFloat(e.nativeEvent.text) || 0)}
+                                    onEndEditing={(e) => handleAccountBalanceUpdate(account.id, e.nativeEvent.text)}
                                 />
                             </View>
                         ))}
@@ -505,8 +540,8 @@ const SetupGuide = ({ navigation }) => {
                                 <TouchableOpacity
                                     style={[
                                         styles.iconItem,
-                                        (currentEditingForm === 'account' && newAccountIcon === item) ||
-                                        (currentEditingForm === 'category' && newCategoryIcon === item)
+                                        ((currentEditingForm === 'account' && (editingAccount?.icon === item || newAccountIcon === item)) ||
+                                        (currentEditingForm === 'category' && newCategoryIcon === item))
                                             ? styles.selectedIcon
                                             : null,
                                     ]}

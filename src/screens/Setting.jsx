@@ -250,6 +250,21 @@ const Setting = ({ navigation }) => {
         }
     };
 
+    const handleUpdateAccount = async (account, updatedData) => {
+        try {
+            await updateAccount(
+                account.id,
+                updatedData.name || account.name,
+                updatedData.icon || account.icon,
+                updatedData.openingBalance ?? account.openingBalance
+            );
+            loadData();
+            Alert.alert('Success', 'Account updated successfully');
+        } catch (error) {
+            Alert.alert('Error', error.message);
+        }
+    };
+
     const styles = StyleSheet.create({
         container: {
             flex: 1,
@@ -493,25 +508,25 @@ const Setting = ({ navigation }) => {
                                 </View>
                             </View>
                             <View style={styles.accountActions}>
+                                {/* Allow editing balance even for permanent accounts */}
+                                <TouchableOpacity
+                                    onPress={() => {
+                                        setEditingAccount(account);
+                                        setAccountForm({
+                                            name: account.name,
+                                            icon: account.icon || 'wallet-outline',
+                                            openingBalance: account.openingBalance?.toString() || '0'
+                                        });
+                                        setShowAccountModal(true);
+                                    }}
+                                >
+                                    <Icon name="create-outline" size={24} color={theme.color} />
+                                </TouchableOpacity>
+                                {/* Only show delete for non-permanent accounts */}
                                 {account.isPermanent !== 1 && (
-                                    <>
-                                        <TouchableOpacity
-                                            onPress={() => {
-                                                setEditingAccount(account);
-                                                setAccountForm({
-                                                    name: account.name,
-                                                    icon: account.icon || 'wallet-outline',
-                                                    openingBalance: account.openingBalance?.toString() || '0'
-                                                });
-                                                setShowAccountModal(true);
-                                            }}
-                                        >
-                                            <Icon name="create-outline" size={24} color={theme.color} />
-                                        </TouchableOpacity>
-                                        <TouchableOpacity onPress={() => handleDeleteAccount(account)}>
-                                            <Icon name="trash-outline" size={24} color="#EF5350" />
-                                        </TouchableOpacity>
-                                    </>
+                                    <TouchableOpacity onPress={() => handleDeleteAccount(account)}>
+                                        <Icon name="trash-outline" size={24} color="#EF5350" />
+                                    </TouchableOpacity>
                                 )}
                                 <TouchableOpacity 
                                     onPress={() => handleDefaultAccount(account.id)}

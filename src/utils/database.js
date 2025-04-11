@@ -197,9 +197,8 @@ export const addAccount = (name, icon, openingBalance) => {
 export const updateAccount = (id, name, icon, openingBalance) => {
   return new Promise((resolve, reject) => {
     db.transaction(tx => {
-      // First check if account is permanent
       tx.executeSql(
-        'SELECT isPermanent FROM Accounts WHERE id = ?',
+        'SELECT name FROM Accounts WHERE id = ?',
         [id],
         (_, results) => {
           if (results.rows.length === 0) {
@@ -207,12 +206,7 @@ export const updateAccount = (id, name, icon, openingBalance) => {
             return;
           }
 
-          const account = results.rows.item(0);
-          if (account.isPermanent) {
-            reject(new Error('Cannot modify permanent account'));
-            return;
-          }
-
+          // Allow all updates, including for permanent accounts
           tx.executeSql(
             'UPDATE Accounts SET name = ?, icon = ?, openingBalance = ? WHERE id = ?',
             [name, icon, openingBalance, id],
@@ -270,34 +264,16 @@ export const deleteAccount = (id) => {
 export const updateDefaultAccount = (id) => {
   return new Promise((resolve, reject) => {
     db.transaction(tx => {
-      // Check if the target account is permanent (Cash)
       tx.executeSql(
         'SELECT name, isPermanent FROM Accounts WHERE id = ?',
         [id],
         (_, results) => {
           const targetAccount = results.rows.item(0);
-
-          // Get current default account
+          // Allow any account to become default
           tx.executeSql(
-            'SELECT id, isPermanent FROM Accounts WHERE isDefault = 1',
-            [],
-            (_, defaultResults) => {
-              const currentDefault = defaultResults.rows.item(0);
-
-              // If current default is permanent (Cash) and target is not Cash, reject
-              if (currentDefault?.isPermanent === 1 && !targetAccount.isPermanent) {
-                reject(new Error('Cannot change default from Cash account'));
-                return;
-              }
-
-              // Proceed with update
-              tx.executeSql(
-                'UPDATE Accounts SET isDefault = CASE id WHEN ? THEN 1 ELSE 0 END',
-                [id],
-                (_, updateResults) => resolve(updateResults),
-                (_, error) => reject(error)
-              );
-            },
+            'UPDATE Accounts SET isDefault = CASE id WHEN ? THEN 1 ELSE 0 END',
+            [id],
+            (_, updateResults) => resolve(updateResults),
             (_, error) => reject(error)
           );
         },
