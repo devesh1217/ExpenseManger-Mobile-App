@@ -1,4 +1,4 @@
-import { StyleSheet, ScrollView, View, TouchableOpacity, Dimensions, Modal, PanResponder } from 'react-native'
+import { StyleSheet, ScrollView, View, TouchableOpacity, Dimensions, Modal, PanResponder, Text } from 'react-native'
 import React, { useState, useEffect } from 'react'
 import FormContainer from '../components/home/Forms/FormContainer';
 import TransectionsContainer from '../components/home/Transections/TransectionsContainer';
@@ -8,7 +8,9 @@ import Icon from 'react-native-vector-icons/Ionicons';  // Replace Expo icons
 import { increment, decrement, setCounter } from '../redux/slices/dateSlice';
 import { useDispatch, useSelector } from 'react-redux';
 import { useRoute } from '@react-navigation/native';
-import { addDays } from 'date-fns';
+import { addDays, format, isAfter, startOfDay } from 'date-fns';
+import { GestureHandlerRootView, GestureDetector, Directions, Gesture } from 'react-native-gesture-handler';
+import { runOnJS } from 'react-native-reanimated';
 
 const HomeContainer = ({ route }) => {
     const { theme } = useTheme();
@@ -20,38 +22,53 @@ const HomeContainer = ({ route }) => {
         if (route.params?.targetDate) {
             const targetDate = new Date(route.params.targetDate);
             const today = new Date();
-            
+
             // Reset both dates to start of day
             today.setHours(0, 0, 0, 0);
             targetDate.setHours(0, 0, 0, 0);
-            
+
             // Calculate difference in days
             const diffTime = targetDate.getTime() - today.getTime();
             const diffDays = Math.round(diffTime / (1000 * 60 * 60 * 24));
-            
+
             // Set counter directly to the difference in days
             dispatch(setCounter(diffDays));
         }
     }, [route.params?.targetDate]);
 
-    const panResponder = React.useMemo(
-        () =>
-            PanResponder.create({
-                onStartShouldSetPanResponder: () => true,
-                onMoveShouldSetPanResponder: (_, gestureState) => {
-                    // Only respond to horizontal gestures
-                    return Math.abs(gestureState.dx) > Math.abs(gestureState.dy);
-                },
-                onPanResponderRelease: (_, gestureState) => {
-                    if (gestureState.dx > 100) {
-                        dispatch(decrement());
-                    } else if (gestureState.dx < -100) {
-                        dispatch(increment());
-                    }
-                },
-            }),
-        [dispatch]
-    );
+    const isFutureDate = (daysToAdd) => {
+        return isAfter(
+            startOfDay(addDays(new Date(), daysToAdd)),
+            startOfDay(new Date())
+        );
+    };
+
+    const handleNextDay = () => {
+        if (!isFutureDate(counter + 1)) {
+            dispatch(increment());
+        }
+    };
+
+    const handleSwipe = (velocityX) => {
+        if (velocityX < -500 && !isFutureDate(counter + 1)) {
+            dispatch(increment());
+        } else if (velocityX > 500) {
+            dispatch(decrement());
+        }
+    };
+
+    const swipeGesture = Gesture.Pan()
+        .activeOffsetX([-10, 10])
+        .onBegin(() => {
+            'worklet';
+        })
+        .onUpdate(() => {
+            'worklet';
+        })
+        .onEnd((event) => {
+            'worklet';
+            runOnJS(handleSwipe)(event.velocityX);
+        });
 
     const styles = StyleSheet.create({
         container: {
@@ -98,23 +115,50 @@ const HomeContainer = ({ route }) => {
             position: 'absolute',
             bottom: 0
         },
+        dateContainer: {
+            flexDirection: 'row',
+            justifyContent: 'space-between',
+            alignItems: 'center',
+            paddingHorizontal: 15,
+            paddingVertical: 10,
+        },
+        date: {
+            fontSize: 18,
+            color: theme.color,
+        },
     });
 
     return (
-        <>
-            <View style={styles.container} {...panResponder.panHandlers}>
-                <DateBar />
-                <ScrollView contentContainerStyle={styles.scrollContainer}>
-                    <TransectionsContainer />
-                </ScrollView>
+        <GestureHandlerRootView style={{ flex: 1 }}>
+            <GestureDetector gesture={swipeGesture}>
+                <View style={styles.container}>
+                    <View style={styles.dateContainer}>
+                        <TouchableOpacity onPress={() => dispatch(decrement())}>
+                            <Icon name="chevron-back" size={24} color={theme.color} />
+                        </TouchableOpacity>
+                        <Text style={styles.date}>
+                            {format(addDays(new Date(), counter), 'dd MMM yyyy')}
+                        </Text>
+                        <TouchableOpacity
+                            onPress={handleNextDay}
+                            disabled={isFutureDate(counter + 1)}
+                            style={{ opacity: isFutureDate(counter + 1) ? 0.5 : 1 }}
+                        >
+                            <Icon name="chevron-forward" size={24} color={theme.color} />
+                        </TouchableOpacity>
+                    </View>
+                    <ScrollView contentContainerStyle={styles.scrollContainer}>
+                        <TransectionsContainer />
+                    </ScrollView>
 
-                <TouchableOpacity
-                    style={styles.fab}
-                    onPress={() => setShowModal(true)}
-                >
-                    <Icon name="add" size={24} color="white" />
-                </TouchableOpacity>
-            </View>
+                    <TouchableOpacity
+                        style={styles.fab}
+                        onPress={() => setShowModal(true)}
+                    >
+                        <Icon name="add" size={24} color="white" />
+                    </TouchableOpacity>
+                </View>
+            </GestureDetector>
             <Modal
                 visible={showModal}
                 transparent={true}
@@ -133,7 +177,7 @@ const HomeContainer = ({ route }) => {
                     </View>
                 </TouchableOpacity>
             </Modal>
-        </>
+        </GestureHandlerRootView>
     );
 };
 
