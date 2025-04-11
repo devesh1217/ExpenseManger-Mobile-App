@@ -1,4 +1,4 @@
-import { View, Text, StyleSheet, TouchableOpacity, Modal, FlatList } from 'react-native';
+import { View, Text, StyleSheet, TouchableOpacity, Modal, FlatList, ScrollView } from 'react-native';
 import React, { useState, useEffect } from 'react';
 import { useTheme } from '../hooks/ThemeContext';
 import MaterialIcons from 'react-native-vector-icons/MaterialIcons';
@@ -224,7 +224,11 @@ const Yearly = ({ navigation, route }) => {
     );
 
     return (
-        <View style={styles.container}>
+        <ScrollView 
+            style={[styles.container]}
+            contentContainerStyle={{ flexGrow: 1 }}
+            showsVerticalScrollIndicator={false}
+        >
             <View style={styles.header}>
                 <View style={{ width: '50%' }}>
                     <CustomPicker
@@ -284,7 +288,7 @@ const Yearly = ({ navigation, route }) => {
                     </TouchableOpacity>
                 )}
             />
-        </View>
+        </ScrollView>
     );
 };
 

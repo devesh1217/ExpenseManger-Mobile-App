@@ -5,7 +5,8 @@ import MaterialIcons from 'react-native-vector-icons/MaterialIcons';
 import { useTheme } from '../hooks/ThemeContext';
 import CustomPicker from '../components/common/CustomPicker';
 import TransectionEntry from '../components/home/Transections/TransectionEntry';
-import { useFocusEffect } from '@react-navigation/native';
+import { useFocusEffect, useNavigation } from '@react-navigation/native';
+import MonthlyTransactionEntry from '../components/monthly/MonthlyTransactionEntry';
 
 const Monthly = ({ navigation, route }) => {
     const { theme } = useTheme();
@@ -273,8 +274,17 @@ const Monthly = ({ navigation, route }) => {
         icon: 'calendar'
     }));
 
+    const handleTransactionPress = (transaction) => {
+        // Navigate to Home with the transaction date
+        navigation.navigate('Home', { targetDate: transaction.date });
+    };
+
     return (
-        <View style={styles.container}>
+        <ScrollView 
+            style={[styles.container]}
+            contentContainerStyle={{ flexGrow: 1 }}
+            showsVerticalScrollIndicator={false}
+        >
             <View style={styles.datePickerRow}>
                 <View style={{ flex: 2, marginRight: 8 }}>
                     <CustomPicker
@@ -320,22 +330,18 @@ const Monthly = ({ navigation, route }) => {
 
             <ScrollView style={styles.scrollView}>
                 {Object.entries(transactionsByDate).map(([date, transactions]) => (
-                    <TouchableOpacity 
-                        key={`${date}_${selectedDate.getTime()}`} // Add unique key combining date and selected month
-                        onPress={() => {
-                            navigation.navigate('Home', { targetDate: date });  // Pass the date string directly
-                        }}
-                    >
-                        <View style={styles.dateGroup}>
-                            <Text style={styles.dateHeader}>{date}</Text>
-                            {transactions.map((transaction) => (
-                                <TransectionEntry key={transaction.id} entry={transaction} />
-                            ))}
-                        </View>
-                    </TouchableOpacity>
+                    <View key={date} style={styles.dateGroup}>
+                        <Text style={styles.dateHeader}>{date}</Text>
+                        {transactions.map((transaction) => (
+                            <MonthlyTransactionEntry 
+                                key={transaction.id} 
+                                entry={transaction} 
+                            />
+                        ))}
+                    </View>
                 ))}
             </ScrollView>
-        </View>
+        </ScrollView>
     );
 };
 
