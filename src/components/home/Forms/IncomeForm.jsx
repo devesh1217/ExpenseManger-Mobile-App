@@ -1,4 +1,4 @@
-import { View, Text, TextInput, Button, Pressable } from 'react-native'
+import { View, Text, TextInput, Button, Pressable, Alert } from 'react-native'
 import React, { useState, useEffect } from 'react'
 import { StyleSheet } from 'react-native';
 import { insertTransaction } from '../../../../src/utils/database';
@@ -146,7 +146,29 @@ const IncomeForm = ({ onClose, navigation }) => {
     const counter = useSelector((state) => state.date.value);
     const dispatch = useDispatch();
 
+    const validateForm = () => {
+        if (!incomeForm.title.trim()) {
+            Alert.alert('Error', 'Please enter a title');
+            return false;
+        }
+        if (!incomeForm.amount || parseFloat(incomeForm.amount) <= 0) {
+            Alert.alert('Error', 'Please enter a valid amount');
+            return false;
+        }
+        if (!incomeForm.account) {
+            Alert.alert('Error', 'Please select an account');
+            return false;
+        }
+        if (!incomeForm.category) {
+            Alert.alert('Error', 'Please select a category');
+            return false;
+        }
+        return true;
+    };
+
     const handleSubmit = () => {
+        if (!validateForm()) return;
+
         const transaction = {
             title: incomeForm.title,
             description: incomeForm.description,

@@ -11,10 +11,12 @@ import { useRoute } from '@react-navigation/native';
 import { addDays, format, isAfter, startOfDay } from 'date-fns';
 import { GestureHandlerRootView, GestureDetector, Directions, Gesture } from 'react-native-gesture-handler';
 import { runOnJS } from 'react-native-reanimated';
+import DateTimePicker from '@react-native-community/datetimepicker';
 
 const HomeContainer = ({ route }) => {
     const { theme } = useTheme();
     const [showModal, setShowModal] = useState(false);
+    const [showDatePicker, setShowDatePicker] = useState(false);
     const counter = useSelector(state => state.date.value)
     const dispatch = useDispatch();
 
@@ -54,6 +56,20 @@ const HomeContainer = ({ route }) => {
             dispatch(increment());
         } else if (velocityX > 500) {
             dispatch(decrement());
+        }
+    };
+
+    const handleDateChange = (event, selectedDate) => {
+        setShowDatePicker(false);
+        if (selectedDate) {
+            const today = startOfDay(new Date());
+            const selected = startOfDay(selectedDate);
+            const diffTime = selected.getTime() - today.getTime();
+            const diffDays = Math.round(diffTime / (1000 * 60 * 60 * 24));
+            
+            if (!isFutureDate(diffDays)) {
+                dispatch(setCounter(diffDays));
+            }
         }
     };
 
@@ -136,9 +152,11 @@ const HomeContainer = ({ route }) => {
                         <TouchableOpacity onPress={() => dispatch(decrement())}>
                             <Icon name="chevron-back" size={24} color={theme.color} />
                         </TouchableOpacity>
-                        <Text style={styles.date}>
-                            {format(addDays(new Date(), counter), 'dd MMM yyyy')}
-                        </Text>
+                        <TouchableOpacity onPress={() => setShowDatePicker(true)}>
+                            <Text style={styles.date}>
+                                {format(addDays(new Date(), counter), 'dd MMM yyyy')}
+                            </Text>
+                        </TouchableOpacity>
                         <TouchableOpacity
                             onPress={handleNextDay}
                             disabled={isFutureDate(counter + 1)}
@@ -147,6 +165,16 @@ const HomeContainer = ({ route }) => {
                             <Icon name="chevron-forward" size={24} color={theme.color} />
                         </TouchableOpacity>
                     </View>
+
+                    {showDatePicker && (
+                        <DateTimePicker
+                            value={addDays(new Date(), counter)}
+                            mode="date"
+                            maximumDate={new Date()}
+                            onChange={handleDateChange}
+                        />
+                    )}
+
                     <ScrollView contentContainerStyle={styles.scrollContainer}>
                         <TransectionsContainer />
                     </ScrollView>

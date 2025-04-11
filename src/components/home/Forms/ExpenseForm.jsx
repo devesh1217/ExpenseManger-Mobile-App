@@ -149,7 +149,29 @@ const ExpenseForm = ({ onClose, navigation }) => {
         },
     });
 
+    const validateForm = () => {
+        if (!expenseForm.title.trim()) {
+            Alert.alert('Error', 'Please enter a title');
+            return false;
+        }
+        if (!expenseForm.amount || parseFloat(expenseForm.amount) <= 0) {
+            Alert.alert('Error', 'Please enter a valid amount');
+            return false;
+        }
+        if (!expenseForm.account) {
+            Alert.alert('Error', 'Please select an account');
+            return false;
+        }
+        if (!expenseForm.category) {
+            Alert.alert('Error', 'Please select a category');
+            return false;
+        }
+        return true;
+    };
+
     const handleSubmit = () => {
+        if (!validateForm()) return;
+
         const transaction = {
             title: expenseForm.title,
             description: expenseForm.description,
