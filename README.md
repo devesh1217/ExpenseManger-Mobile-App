@@ -1,86 +1,137 @@
-This is a new [**React Native**](https://reactnative.dev) project, bootstrapped using [`@react-native-community/cli`](https://github.com/react-native-community/cli).
+# My Expense Manager
 
-# Getting Started
+A comprehensive mobile application for tracking personal finances, built with React Native.
 
-> **Note**: Make sure you have completed the [Set Up Your Environment](https://reactnative.dev/docs/set-up-your-environment) guide before proceeding.
+## Features
 
-## Step 1: Start Metro
+### Transaction Management
+- Add income and expense transactions
+- Multiple account support (Cash, Bank, UPI, etc.)
+- Customizable categories for both income and expense
+- Edit or delete existing transactions
+- Quick access to recent transactions
 
-First, you will need to run **Metro**, the JavaScript build tool for React Native.
+### Date-based Navigation
+- Swipe gestures for navigating between dates
+- Date picker for quick navigation
+- Future date transactions prevented
+- View transactions by specific dates
 
-To start the Metro dev server, run the following command from the root of your React Native project:
+### Monthly Overview
+- Monthly income and expense summary
+- Daily transaction breakdown
+- Visual representation through graphs
+- Navigate to specific dates from monthly view
+- Monthly balance calculation
 
-```sh
-# Using npm
-npm start
+### Yearly Analysis
+- Yearly income and expense overview
+- Month-wise breakdown
+- Visual charts for yearly comparison
+- Quick navigation to monthly details
+- Annual balance insights
 
-# OR using Yarn
-yarn start
-```
+### Search & Filters
+- Search transactions by title
+- Filter by transaction type (Income/Expense)
+- Filter by account type
+- Filter by date range
+- Filter by categories
 
-## Step 2: Build and run your app
+### Data Visualization
+- Bar charts for yearly comparison
+- Line graphs for monthly trends
+- Income vs Expense visualization
+- Interactive graphs with tooltips
+- Clear visual indicators for financial trends
 
-With Metro running, open a new terminal window/pane from the root of your React Native project, and use one of the following commands to build and run your Android or iOS app:
+### Account Management
+- Multiple account support
+- Set default account
+- Track balance per account
+- Easy account switching
+- Account-wise transaction history
 
-### Android
+### Data Management
+- Export data to Excel
+- Automatic daily backups
+- Manual backup option
+- Data restoration capability
+- Secure local storage
 
-```sh
-# Using npm
-npm run android
+### Customization
+- Dark/Light theme support
+- Customizable categories
+- Account preferences
+- Default view settings
+- Currency format settings
 
-# OR using Yarn
-yarn android
-```
+### Initial Setup
+- Guided first-time setup
+- Account initialization
+- Category setup
+- Preferences configuration
+- Quick start guide
 
-### iOS
+### Additional Features
+- Offline functionality
+- Fast performance
+- Intuitive UI/UX
+- Data persistence
+- Error handling
 
-For iOS, remember to install CocoaPods dependencies (this only needs to be run on first clone or after updating native deps).
+## Technical Details
 
-The first time you create a new project, run the Ruby bundler to install CocoaPods itself:
+### Built With
+- React Native
+- Redux for state management
+- SQLite for local database
+- React Navigation
+- Gesture Handler
+- Various charting libraries
 
-```sh
-bundle install
-```
+### Data Storage
+- Local SQLite database
+- AsyncStorage for preferences
+- Automatic backup system
+- Excel export capability
 
-Then, and every time you update your native dependencies, run:
+### UI Components
+- Custom navigation
+- Interactive charts
+- Modal forms
+- Custom pickers
+- Gesture controls
 
-```sh
-bundle exec pod install
-```
+### Performance
+- Optimized rendering
+- Efficient data queries
+- Smooth animations
+- Responsive design
+- Quick load times
 
-For more information, please visit [CocoaPods Getting Started guide](https://guides.cocoapods.org/using/getting-started.html).
+## Getting Started
 
-```sh
-# Using npm
-npm run ios
+1. Clone the repository
+2. Install dependencies: `npm install`
+3. Run on Android: `npm run android`
+4. Run on iOS: `npm run ios`
 
-# OR using Yarn
-yarn ios
-```
+## Support
 
-If everything is set up correctly, you should see your new app running in the Android Emulator, iOS Simulator, or your connected device.
+For issues and feature requests, please create an issue in the repository.
 
-This is one way to run your app — you can also build it directly from Android Studio or Xcode.
+## Developer
 
-## Step 3: Modify your app
+### Muhammad Abdullah
+- **Role**: Full Stack Developer
+- **Specialization**: Mobile and Web Development
+- **Tech Stack**: React Native, MERN Stack
+- **GitHub**: [abdullahprince7717](https://github.com/abdullahprince7717)
+- **LinkedIn**: [Muhammad Abdullah](https://www.linkedin.com/in/muhammad-abdullah-prince/)
 
-Now that you have successfully run the app, let's make changes!
-
-Open `App.tsx` in your text editor of choice and make some changes. When you save, your app will automatically update and reflect these changes — this is powered by [Fast Refresh](https://reactnative.dev/docs/fast-refresh).
-
-When you want to forcefully reload, for example to reset the state of your app, you can perform a full reload:
-
-- **Android**: Press the <kbd>R</kbd> key twice or select **"Reload"** from the **Dev Menu**, accessed via <kbd>Ctrl</kbd> + <kbd>M</kbd> (Windows/Linux) or <kbd>Cmd ⌘</kbd> + <kbd>M</kbd> (macOS).
-- **iOS**: Press <kbd>R</kbd> in iOS Simulator.
-
-## Congratulations! :tada:
-
-You've successfully run and modified your React Native App. :partying_face:
-
-### Now what?
-
-- If you want to add this new React Native code to an existing application, check out the [Integration guide](https://reactnative.dev/docs/integration-with-existing-apps).
-- If you're curious to learn more about React Native, check out the [docs](https://reactnative.dev/docs/getting-started).
+### Contact
+For professional inquiries or collaborations, feel free to connect on LinkedIn.
 
 # Troubleshooting
 

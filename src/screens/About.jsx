@@ -1,5 +1,5 @@
 import React from 'react';
-import { View, Text, StyleSheet, ScrollView, TouchableOpacity } from 'react-native';
+import { View, Text, StyleSheet, ScrollView, TouchableOpacity, Linking } from 'react-native';
 import { useTheme } from '../hooks/ThemeContext';
 import Icon from 'react-native-vector-icons/Ionicons';
 
@@ -10,6 +10,7 @@ const About = ({ navigation }) => {
         container: {
             backgroundColor: theme.backgroundColor,
             padding: 16,
+            marginBottom: 100,
             minHeight: '100%',
             width: '100%',
             position: 'relative',
@@ -52,17 +53,18 @@ const About = ({ navigation }) => {
             color: theme.color,
             opacity: 0.7,
             textAlign: 'center',
-            marginTop: 16,
-            position: 'absolute',
-            top: '100%',
-            left: 10,
+        },
+        link: {
+            color: theme.appThemeColor,
+            textDecorationLine: 'underline',
+            marginVertical: 4,
         },
     });
 
     return (
         <ScrollView style={styles.container}>
             <View style={styles.header}>
-                <TouchableOpacity 
+                <TouchableOpacity
                     style={styles.backButton}
                     onPress={() => navigation.goBack()}
                 >
@@ -70,27 +72,66 @@ const About = ({ navigation }) => {
                 </TouchableOpacity>
                 <Text style={styles.headerTitle}>About</Text>
             </View>
-            
+
             <View style={styles.section}>
                 <Text style={styles.title}>Description</Text>
                 <Text style={styles.text}>
-                    MyExpenseManager is a comprehensive expense tracking application designed 
-                    to help you manage your personal finances effectively.
+                    MyExpenseManager is a comprehensive expense tracking application designed
+                    to help you manage your personal finances effectively. Built with React Native,
+                    it offers a robust set of features for personal finance management.
                 </Text>
             </View>
 
             <View style={styles.section}>
-                <Text style={styles.title}>Features</Text>
+                <Text style={styles.title}>Key Features</Text>
                 <Text style={styles.text}>
-                    • Track daily income and expenses{'\n'}
-                    • Multiple account management{'\n'}
+                    • Complete transaction management{'\n'}
+                    • Multiple account support{'\n'}
+                    • Monthly and yearly analytics{'\n'}
                     • Customizable categories{'\n'}
-                    • Monthly and yearly reports{'\n'}
-                    • Detailed analytics and charts
+                    • Dark/Light theme support{'\n'}
+                    • Data backup and export{'\n'}
+                    • Advanced search and filters{'\n'}
+                    • Interactive charts and reports{'\n'}
+                    • Offline functionality
                 </Text>
             </View>
 
-            <Text style={styles.version}>Version 1.0.0</Text>
+            <View style={styles.section}>
+                <Text style={styles.title}>Support</Text>
+                <Text style={styles.text}>
+                    For issues and feature requests, please visit our repository and create an issue.
+                </Text>
+            </View>
+
+            <View style={styles.section}>
+                <Text style={styles.title}>Developer</Text>
+                <Text style={styles.text}>
+                    Devesh Mehta{'\n'}
+                    Full Stack Developer{'\n\n'}
+                    Experienced in developing mobile and web applications using modern technologies.
+                    Specialized in React Native and MERN stack development.
+                </Text>
+            </View>
+
+            <View style={styles.section}>
+                <Text style={styles.title}>Connect</Text>
+                <Text style={[styles.text, styles.link]}
+                    onPress={() => Linking.openURL('https://github.com/devesh1217')}>
+                    GitHub Profile
+                </Text>
+                <Text style={[styles.text, styles.link]}
+                    onPress={() => Linking.openURL('https://www.linkedin.com/in/devesh1217/')}>
+                    LinkedIn Profile
+                </Text>
+            </View>
+
+            <View style={styles.section}>
+                <Text style={styles.version}>Version 1.0.0</Text>
+                <Text style={styles.version}>
+                    © 2023 Devesh Mehta. All rights reserved.
+                </Text>
+            </View>
         </ScrollView>
     );
 };
