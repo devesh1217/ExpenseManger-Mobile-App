@@ -2,6 +2,48 @@
 
 A comprehensive mobile application for tracking personal finances, built with React Native.
 
+## UI Mockups
+
+<div align="center">
+
+### Home Screen Views
+| Main View | Add Transaction | Menu Open |
+|-----------|----------------|------------|
+|<img src="./src/assets/mockups/home-main.jpg" width="250" height="500" />|<img src="./src/assets/mockups/home-add.jpg" width="250" height="500" />|<img src="./src/assets/mockups/home-edit.jpg" width="250" height="500" />|
+| Daily transactions & balance | Quick transaction entry | Edit & Delete Transection |
+
+### Monthly Analysis Views
+| Overview | Transection View |
+|----------|---------------|
+|<img src="./src/assets/mockups/monthly-graph.jpg" width="250" height="500" />|<img src="./src/assets/mockups/monthly-entries.jpg" width="250" height="500" />|
+| Trend analysis | Monthly summary |
+
+### Yearly Overview Screens
+| Chart View | Detailed View |
+|-------------|---------------|
+|<img src="./src/assets/mockups/yearly-main.jpg" width="250" height="500" />|<img src="./src/assets/mockups/yearly-entries.jpg" width="250" height="500" />|
+| Visual comparisons | Annual overview |
+
+### Charts Screen Views
+| Chart View | Category Transaction |
+|-----------|------------|
+|<img src="./src/assets/mockups/chart-main.jpg" width="250" height="500" />|<img src="./src/assets/mockups/chart-entries.jpg" width="250" height="500" />|
+| Detailed Charts | Category wise Transections |
+
+### Export Screen Views
+| Export View | PDF Export |
+|-----------|------------|
+|<img src="./src/assets/mockups/export-main.jpg" width="250" height="500" />|<img src="./src/assets/mockups/export-pdf.jpg" width="250" height="500" />|
+| Filterd Exports | Preview/Save/Share Export |
+
+### Settings & Search
+| Settings View | About View | Search & Filter View |
+|----------------|------------------|----------------|
+|<img src="./src/assets/mockups/settings.jpg" width="250" height="500" />|<img src="./src/assets/mockups/about.jpg" width="250" height="500" />|<img src="./src/assets/mockups/search.jpg" width="250" height="500" />|
+| Theme/Account/Category customization | About App | Advanced search |
+
+</div>
+
 ## Features
 
 ### Transaction Management
