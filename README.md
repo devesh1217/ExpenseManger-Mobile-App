@@ -165,12 +165,12 @@ For issues and feature requests, please create an issue in the repository.
 
 ## Developer
 
-### Muhammad Abdullah
+### Devesh Mehta
 - **Role**: Full Stack Developer
 - **Specialization**: Mobile and Web Development
 - **Tech Stack**: React Native, MERN Stack
-- **GitHub**: [abdullahprince7717](https://github.com/abdullahprince7717)
-- **LinkedIn**: [Muhammad Abdullah](https://www.linkedin.com/in/muhammad-abdullah-prince/)
+- **GitHub**: [@devesh1217](https://github.com/devesh1217)
+- **LinkedIn**: [Devesh Mehta](https://www.linkedin.com/in/devesh1217/)
 
 ### Contact
 For professional inquiries or collaborations, feel free to connect on LinkedIn.
