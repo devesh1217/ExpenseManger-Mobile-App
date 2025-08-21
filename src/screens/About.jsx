@@ -76,7 +76,7 @@ const About = ({ navigation }) => {
             <View style={styles.section}>
                 <Text style={styles.title}>Description</Text>
                 <Text style={styles.text}>
-                    MyExpenseManager is a comprehensive expense tracking application designed
+                    ArthaLekha is a comprehensive expense tracking application designed
                     to help you manage your personal finances effectively. Built with React Native,
                     it offers a robust set of features for personal finance management.
                 </Text>

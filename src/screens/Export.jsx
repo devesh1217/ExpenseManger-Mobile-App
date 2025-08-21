@@ -166,7 +166,7 @@ const Export = ({ navigation }) => {
                 ? await savePDFToDownloads(tempFilePath)
                 : await saveExcelToDownloads(tempFilePath);
 
-            Alert.alert('Success', 'File saved to Downloads/MyExpenseManager');
+            Alert.alert('Success', 'File saved to Downloads/ArthaLekha');
             setTempFilePath(null);
             format === 'pdf' ? setShowPdfPreview(false) : setShowExcelPreview(false);
         } catch (error) {

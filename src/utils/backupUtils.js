@@ -4,7 +4,7 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 
 const DB_NAME = 'MyExpenseManager.db';
 const BACKUP_DIR = `${RNFS.ExternalDirectoryPath}/backup`;
-const BACKUP_FILE = `${BACKUP_DIR}/MyExpenseManager_backup.json`;
+const BACKUP_FILE = `${BACKUP_DIR}/ArthaLekha_backup.json`;
 
 export const createBackup = async () => {
     try {

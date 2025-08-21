@@ -1,13 +1,14 @@
 {
   "name": "MyExpenseManager",
-  "version": "0.0.1",
+  "version": "0.1.0",
   "private": true,
   "scripts": {
     "android": "react-native run-android",
     "ios": "react-native run-ios",
     "lint": "eslint .",
     "start": "react-native start",
-    "test": "jest"
+    "test": "jest",
+    "version": "react-native-version"
   },
   "dependencies": {
     "@react-native-async-storage/async-storage": "^2.1.2",
@@ -36,6 +37,7 @@
     "react-native-sqlite-storage": "^6.0.1",
     "react-native-svg": "^15.11.2",
     "react-native-vector-icons": "^10.2.0",
+    "react-native-version": "^4.0.0",
     "react-redux": "^9.2.0",
     "xlsx": "^0.18.5"
   },

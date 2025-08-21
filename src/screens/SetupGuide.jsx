@@ -530,7 +530,7 @@ const SetupGuide = ({ navigation }) => {
     if (hasBackup) {
         return (
             <View style={styles.container}>
-                <Text style={styles.header}>Welcome to MyExpenseManager!</Text>
+                <Text style={styles.header}>Welcome to ArthaLekha!</Text>
                 <Text style={[styles.text, { marginBottom: 24 }]}>
                     A previous backup was found on your device. Would you like to restore your data or start fresh?
                 </Text>

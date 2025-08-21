@@ -73,7 +73,7 @@ const NavBar = ({ setMenuOpen, isMenuOpen }) => {
     return (
         <View style={styles.container}>
             <View style={styles.navbar}>
-                <Text style={styles.title}>MyExpenseManager</Text>
+                <Text style={styles.title}>ArthaLekha</Text>
                 <TouchableOpacity 
                     style={styles.menuButton}
                     onPress={() => setShowMenu(!showMenu)}

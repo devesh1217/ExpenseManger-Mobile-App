@@ -136,7 +136,7 @@ export const generatePDFPreview = async (transactions) => {
 
 export const savePDFToDownloads = async (tempFilePath) => {
     try {
-        const downloadPath = `${RNFS.DownloadDirectoryPath}/MyExpenseManager`;
+        const downloadPath = `${RNFS.DownloadDirectoryPath}/ArthaLekha`;
         const fileName = `transactions_${Date.now()}.pdf`;
         const finalPath = `${downloadPath}/${fileName}`;
 
@@ -165,7 +165,7 @@ export const generateExcelPreview = async (transactions) => {
 
 export const saveExcelToDownloads = async (tempFilePath) => {
     try {
-        const downloadPath = `${RNFS.DownloadDirectoryPath}/MyExpenseManager`;
+        const downloadPath = `${RNFS.DownloadDirectoryPath}/ArthaLekha`;
         const fileName = `transactions_${Date.now()}.csv`;
         const finalPath = `${downloadPath}/${fileName}`;
 
