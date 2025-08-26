@@ -4,6 +4,7 @@ import IncomeForm from './IncomeForm';
 import ExpenseForm from './ExpenseForm';
 import { useTheme } from '../../../hooks/ThemeContext';
 import { useNavigation } from '@react-navigation/native';
+import { ScrollView } from 'react-native-gesture-handler';
 
 const FormContainer = ({ onClose }) => {
     const [activeForm, setActiveForm] = useState('income');
@@ -67,7 +68,7 @@ const FormContainer = ({ onClose }) => {
     });
 
     return (
-        <View style={styles.container}>
+        <ScrollView style={styles.container}>
             <View style={styles.tabContainer}>
                 <TouchableOpacity 
                     style={[styles.tab, activeForm === 'income' && styles.activeTab]} 
@@ -104,7 +105,7 @@ const FormContainer = ({ onClose }) => {
                     <ExpenseForm onClose={onClose} navigation={navigation} />
                 </View>
             </Animated.View>
-        </View>
+        </ScrollView>
     );
 };
 

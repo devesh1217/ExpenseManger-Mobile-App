@@ -128,7 +128,7 @@ const HomeContainer = ({ route }) => {
             paddingTop: 20,
             maxHeight: '90%',
             width: '100%',
-            position: 'absolute',
+            position: 'static',
             bottom: 0
         },
         dateContainer: {
