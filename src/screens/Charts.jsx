@@ -3,7 +3,6 @@ import React, { useState, useEffect } from 'react';
 import { useTheme } from '../hooks/ThemeContext';
 import CustomPicker from '../components/common/CustomPicker';
 import { fetchMonthlyTransactions, fetchTransactionsByCategory } from '../utils/database';
-import { categoryOptions } from '../constants/formOptions';
 import { PieChart } from 'react-native-gifted-charts';
 import { useFocusEffect } from '@react-navigation/native';
 import Icon from 'react-native-vector-icons/Ionicons'
@@ -128,7 +127,7 @@ const Charts = ({ navigation, route }) => {
             category,
             amount,
             percentage: ((amount / total) * 100).toFixed(1)
-        }));
+        })).sort((a, b) => b.amount - a.amount);
     };
 
     const handleCategoryPress = async (category, type) => {
@@ -339,7 +338,8 @@ const Charts = ({ navigation, route }) => {
         return (
             <View style={styles.section}>
                 {
-                    Object.entries(data).map(([category, amount]) => (
+                    Object.entries(data).sort((a, b) => b[1] - a[1])
+                    .map(([category, amount]) => (
                         <TouchableOpacity
                             key={category}
                             style={styles.categoryRow}

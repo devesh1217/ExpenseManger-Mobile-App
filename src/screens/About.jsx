@@ -124,6 +124,10 @@ const About = ({ navigation }) => {
                     onPress={() => Linking.openURL('https://www.linkedin.com/in/devesh1217/')}>
                     LinkedIn Profile
                 </Text>
+                <Text style={[styles.text, styles.link]}
+                    onPress={() => Linking.openURL('https://devesh-mehta.vercel.app/?utm_source=myexpensemanager')}>
+                    Portfolio
+                </Text>
             </View>
 
             <View style={styles.section}>

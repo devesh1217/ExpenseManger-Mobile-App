@@ -1,6 +1,5 @@
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { createBackup } from './backupUtils';
-import { Alert } from 'react-native';
 
 const BACKUP_INTERVAL_KEY = 'backupInterval';
 const LAST_BACKUP_KEY = 'lastBackupDate';

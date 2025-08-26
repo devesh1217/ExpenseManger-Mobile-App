@@ -1,5 +1,4 @@
 import { View, Text, TextInput, Pressable, Alert } from 'react-native'
-import { accountOptions, categoryOptions } from '../../../constants/formOptions';
 import React, { useState, useEffect } from 'react'
 import { StyleSheet } from 'react-native';
 import { insertTransaction } from '../../../../src/utils/database';
@@ -8,7 +7,7 @@ import { useSelector, useDispatch } from 'react-redux';
 import { addExpense } from '../../../../src/redux/slices/transactionSlice';
 import CustomPicker from '../../common/CustomPicker';
 import { getAccounts, getCategories, getMostFrequentCategory } from '../../../../src/utils/database';
-import { useNavigation, useRoute } from '@react-navigation/native';
+import { useRoute } from '@react-navigation/native';
 import { saveFormState, loadFormState, clearFormState } from '../../../utils/formStorage';
 import Icon from 'react-native-vector-icons/Ionicons';
 

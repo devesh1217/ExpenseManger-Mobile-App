@@ -2,38 +2,58 @@ import { View, Text, StyleSheet, TouchableOpacity, Modal, TextInput, Alert } fro
 import React, { useState, useEffect } from 'react'
 import { useTheme } from '../../../hooks/ThemeContext'
 import Icon from 'react-native-vector-icons/Ionicons';
-import { categoryOptions, accountOptions } from '../../../constants/formOptions';
 import CustomPicker from '../../common/CustomPicker';
-import { updateTransaction, deleteTransaction, getAccounts } from '../../../utils/database';
+import { updateTransaction, deleteTransaction, getAccounts, getCategories } from '../../../utils/database';
 import DateTimePicker from '@react-native-community/datetimepicker';
 
 const TransectionEntry = ({ entry, onUpdate }) => {
     const { theme } = useTheme();
     const [modalVisible, setModalVisible] = useState(false);
-    const [editedEntry, setEditedEntry] = useState({ 
+    const [editedEntry, setEditedEntry] = useState({
         ...entry,
         date: entry.date || new Date().toISOString().split('T')[0]
     });
     const [showCategoryPicker, setShowCategoryPicker] = useState(false);
     const [showAccountPicker, setShowAccountPicker] = useState(false);
-    const [customAccounts, setCustomAccounts] = useState([]);
     const [allAccounts, setAllAccounts] = useState([]);
     const [showDatePicker, setShowDatePicker] = useState(false);
+    const [categoryOptions, setCategoryOptions] = useState({
+        income: [],
+        expense: []
+    });
+    const [accountOptions, setAccountOption] = useState(accountOptions);
 
     useEffect(() => {
-        loadCustomAccounts();
+        const fetchCategories = async () => {
+            const categories = await getCategories();
+            setCategoryOptions({
+                income: categories.income.map(cat => ({
+                    label: cat.name,
+                    value: cat.name,
+                    icon: cat.icon || 'add-circle-outline'
+                })),
+                expense: categories.expense.map(cat => ({
+                    label: cat.name,
+                    value: cat.name,
+                    icon: cat.icon || 'remove-circle-outline'
+                }))
+            });
+        };
+        fetchCategories();
     }, []);
 
-    const loadCustomAccounts = async () => {
-        const accounts = await getAccounts();
-        const customAccountOptions = accounts.map(acc => ({
-            label: acc.name,
-            value: acc.name,
-            icon: 'wallet-outline'
-        }));
-        setCustomAccounts(customAccountOptions);
-        setAllAccounts([...accountOptions, ...customAccountOptions]);
-    };
+    useEffect(() => {
+        const fetchAccounts = async () => {
+            const accounts = await getAccounts();
+            setAllAccounts(accounts.map(acc => ({
+                label: acc.name,
+                value: acc.name,
+                icon: acc.icon || 'wallet-outline'
+            })));
+        };
+        fetchAccounts();
+    }, []);
+
 
     const getCategoryIcon = (category, type) => {
         const options = type === 'income' ? categoryOptions.income : categoryOptions.expense;
@@ -232,7 +252,7 @@ const TransectionEntry = ({ entry, onUpdate }) => {
                 <View style={styles.modalOverlay}>
                     <View style={styles.modalContent}>
                         <View style={styles.modalHeader}>
-                            <Text style={styles.modalTitle}>Transaction Details</Text>
+                            <Text style={styles.modalTitle}>Transection Details</Text>
                             <TouchableOpacity onPress={() => setModalVisible(false)}>
                                 <Icon name="close" size={24} color={theme.color} />
                             </TouchableOpacity>
@@ -257,7 +277,7 @@ const TransectionEntry = ({ entry, onUpdate }) => {
                                 numberOfLines={4}
                             />
 
-                            <TouchableOpacity 
+                            <TouchableOpacity
                                 style={styles.input}
                                 onPress={() => setShowDatePicker(true)}
                             >

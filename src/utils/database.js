@@ -15,7 +15,7 @@ export const createTables = () => {
   db.transaction((tx) => {
     // Drop existing tables if needed
     tx.executeSql('DROP TABLE IF EXISTS CustomAccounts;');
-    
+
     // Create new Accounts table
     tx.executeSql(`
       CREATE TABLE IF NOT EXISTS Accounts (
@@ -298,6 +298,9 @@ export const getCategories = () => {
             const category = results.rows.item(i);
             categories[category.type].push(category);
           }
+          // Sort both arrays by name
+          categories.income.sort((a, b) => a.name.localeCompare(b.name));
+          categories.expense.sort((a, b) => a.name.localeCompare(b.name));
           resolve(categories);
         },
         (_, error) => reject(error)
