@@ -103,7 +103,7 @@ const Charts = ({ navigation, route }) => {
         React.useCallback(() => {
             fetchMonthData();
             fetchYearData();
-            return () => {};
+            return () => { };
         }, [selectedMonth, selectedYear, route.params?.reload])
     );
 
@@ -133,17 +133,17 @@ const Charts = ({ navigation, route }) => {
 
     const handleCategoryPress = async (category, type) => {
         try {
-            const date = activeTab === 'monthly' 
+            const date = activeTab === 'monthly'
                 ? `${selectedYear}-${String(selectedMonth + 1).padStart(2, '0')}-01`
                 : selectedYear.toString();
-                
+
             const transactions = await fetchTransactionsByCategory(
-                type, 
-                category, 
-                date, 
+                type,
+                category,
+                date,
                 activeTab === 'monthly'
             );
-            
+
             setSelectedCategory({ name: category, type });
             setCategoryTransactions(transactions);
             setShowTransactions(true);
@@ -333,27 +333,44 @@ const Charts = ({ navigation, route }) => {
     };
 
     const renderCategoryData = (data, type) => {
-        return Object.entries(data).map(([category, amount]) => (
-            <TouchableOpacity
-                key={category}
-                style={styles.categoryRow}
-                onPress={() => handleCategoryPress(category, type)}
-            >
-                <Text style={styles.categoryText}>{category}</Text>
-                <Text style={[
-                    styles.amountText,
-                    type === 'income' ? styles.incomeText : styles.expenseText
-                ]}>
-                    ₹{amount.toFixed(2)}
-                </Text>
-            </TouchableOpacity>
-        ));
+        if (Object.keys(data).length === 0) {
+            return <></>;
+        }
+        return (
+            <View style={styles.section}>
+                {
+                    Object.entries(data).map(([category, amount]) => (
+                        <TouchableOpacity
+                            key={category}
+                            style={styles.categoryRow}
+                            onPress={() => handleCategoryPress(category, type)}
+                        >
+                            <Text style={styles.categoryText}>{category}</Text>
+                            <Text style={[
+                                styles.amountText,
+                                type === 'income' ? styles.incomeText : styles.expenseText
+                            ]}>
+                                ₹{amount.toFixed(2)}
+                            </Text>
+                        </TouchableOpacity>
+                    ))
+                }
+            </View>
+        );
     };
 
     const ChartWithLegend = ({ data, type }) => {
         const chartData = getChartData(data, type);
         const legendData = getLegendData(data, type);
         const total = Object.values(data).reduce((sum, amount) => sum + amount, 0);
+
+        if (chartData.length === 0) {
+            return (
+                <View style={styles.chartContainer}>
+                    <Text style={styles.chartTitle}>No data available</Text>
+                </View>
+            );
+        }
 
         return (
             <View style={styles.chartContainer}>
@@ -395,13 +412,13 @@ const Charts = ({ navigation, route }) => {
     return (
         <ScrollView style={styles.container}>
             <View style={styles.tabContainer}>
-                <TouchableOpacity 
+                <TouchableOpacity
                     style={[styles.tab, activeTab === 'monthly' && styles.activeTab]}
                     onPress={() => setActiveTab('monthly')}
                 >
                     <Text style={styles.tabText}>Monthly</Text>
                 </TouchableOpacity>
-                <TouchableOpacity 
+                <TouchableOpacity
                     style={[styles.tab, activeTab === 'yearly' && styles.activeTab]}
                     onPress={() => setActiveTab('yearly')}
                 >
@@ -437,25 +454,23 @@ const Charts = ({ navigation, route }) => {
                     </View>
 
                     <View style={styles.typeSwitch}>
-                        <TouchableOpacity 
+                        <TouchableOpacity
                             style={[styles.typeButton, activeType === 'income' && styles.activeType]}
                             onPress={() => setActiveType('income')}
                         >
-                            <Text style={styles.tabText}>Income</Text>
+                            <Text style={[styles.tabText, { color: activeType === 'income' ? '#fff' : theme.color }]}>Income</Text>
                         </TouchableOpacity>
-                        <TouchableOpacity 
+                        <TouchableOpacity
                             style={[styles.typeButton, activeType === 'expense' && styles.activeType]}
                             onPress={() => setActiveType('expense')}
                         >
-                            <Text style={styles.tabText}>Expense</Text>
+                            <Text style={[styles.tabText, { color: activeType !== 'income' ? '#fff' : theme.color }]}>Expense</Text>
                         </TouchableOpacity>
                     </View>
 
                     <ChartWithLegend data={monthlyData[activeType]} type={activeType} />
 
-                    <View style={styles.section}>
-                        {renderCategoryData(monthlyData[activeType], activeType)}
-                    </View>
+                    {renderCategoryData(monthlyData[activeType], activeType)}
                 </>
             ) : (
                 <>
@@ -471,25 +486,23 @@ const Charts = ({ navigation, route }) => {
                     </View>
 
                     <View style={styles.typeSwitch}>
-                        <TouchableOpacity 
+                        <TouchableOpacity
                             style={[styles.typeButton, activeType === 'income' && styles.activeType]}
                             onPress={() => setActiveType('income')}
                         >
-                            <Text style={styles.tabText}>Income</Text>
+                            <Text style={[styles.tabText, { color: activeType === 'income' ? '#fff' : theme.color }]}>Income</Text>
                         </TouchableOpacity>
-                        <TouchableOpacity 
+                        <TouchableOpacity
                             style={[styles.typeButton, activeType === 'expense' && styles.activeType]}
                             onPress={() => setActiveType('expense')}
                         >
-                            <Text style={styles.tabText}>Expense</Text>
+                            <Text style={[styles.tabText, { color: activeType !== 'income' ? '#fff' : theme.color }]}>Expense</Text>
                         </TouchableOpacity>
                     </View>
 
                     <ChartWithLegend data={yearlyData[activeType]} type={activeType} />
 
-                    <View style={styles.section}>
-                        {renderCategoryData(yearlyData[activeType], activeType)}
-                    </View>
+                    {renderCategoryData(yearlyData[activeType], activeType)}
                 </>
             )}
 

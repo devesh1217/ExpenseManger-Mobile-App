@@ -68,7 +68,7 @@ const Setting = ({ navigation }) => {
         const fetchedAccounts = await getAccounts();
         const fetchedCategories = await getCategories();
         const allAccountBalances = await getAllAccountBalances();
-        
+
         setAccounts(fetchedAccounts);
         setCategories(fetchedCategories);
         setAllAccounts(allAccountBalances);
@@ -464,7 +464,7 @@ const Setting = ({ navigation }) => {
         <>
             <ScrollView style={styles.container}>
                 <View style={styles.header}>
-                    <TouchableOpacity 
+                    <TouchableOpacity
                         style={styles.backButton}
                         onPress={() => navigation.goBack()}
                     >
@@ -485,7 +485,7 @@ const Setting = ({ navigation }) => {
 
                 <View style={styles.section}>
                     <Text style={styles.sectionTitle}>Accounts</Text>
-                    <TouchableOpacity 
+                    <TouchableOpacity
                         style={styles.addButton}
                         onPress={() => {
                             setAccountForm({ name: '', icon: 'wallet-outline', openingBalance: '0' });
@@ -528,12 +528,12 @@ const Setting = ({ navigation }) => {
                                         <Icon name="trash-outline" size={24} color="#EF5350" />
                                     </TouchableOpacity>
                                 )}
-                                <TouchableOpacity 
+                                <TouchableOpacity
                                     onPress={() => handleDefaultAccount(account.id)}
                                 >
-                                    <Icon 
-                                        name={account.isDefault ? 'star' : 'star-outline'} 
-                                        size={24} 
+                                    <Icon
+                                        name={account.isDefault ? 'star' : 'star-outline'}
+                                        size={24}
                                         color={account.isDefault ? theme.appThemeColor : theme.color}
                                     />
                                 </TouchableOpacity>
@@ -564,7 +564,7 @@ const Setting = ({ navigation }) => {
                                 placeholder="Account Name"
                                 placeholderTextColor={theme.color + '80'}
                                 value={accountForm.name}
-                                onChangeText={(text) => setAccountForm({...accountForm, name: text})}
+                                onChangeText={(text) => setAccountForm({ ...accountForm, name: text })}
                             />
 
                             <TextInput
@@ -572,11 +572,11 @@ const Setting = ({ navigation }) => {
                                 placeholder="Opening Balance"
                                 placeholderTextColor={theme.color + '80'}
                                 value={accountForm.openingBalance}
-                                onChangeText={(text) => setAccountForm({...accountForm, openingBalance: text})}
+                                onChangeText={(text) => setAccountForm({ ...accountForm, openingBalance: text })}
                                 keyboardType="numeric"
                             />
 
-                            <TouchableOpacity 
+                            <TouchableOpacity
                                 style={styles.iconSelector}
                                 onPress={() => {
                                     setCurrentEditingForm('account');
@@ -590,7 +590,7 @@ const Setting = ({ navigation }) => {
                             </TouchableOpacity>
 
                             <View style={styles.buttonContainer}>
-                                <TouchableOpacity 
+                                <TouchableOpacity
                                     style={[styles.addButton, { flex: 1 }]}
                                     onPress={handleSaveAccount}
                                 >
@@ -625,7 +625,7 @@ const Setting = ({ navigation }) => {
                                         style={[
                                             styles.iconItem,
                                             (currentEditingForm === 'account' && accountForm.icon === item) ||
-                                            (currentEditingForm === 'category' && categoryForm.icon === item)
+                                                (currentEditingForm === 'category' && categoryForm.icon === item)
                                                 ? styles.selectedIcon
                                                 : null,
                                         ]}
@@ -650,7 +650,7 @@ const Setting = ({ navigation }) => {
                                 setCategoryForm(prev => ({ ...prev, type: 'income' }));
                             }}
                         >
-                            <Text style={styles.buttonText}>Income</Text>
+                            <Text style={{ color: categoryType === 'income' ? '#fff' : theme.color }}>Income</Text>
                         </TouchableOpacity>
                         <TouchableOpacity
                             style={[styles.addButton, { flex: 1, backgroundColor: categoryType === 'expense' ? theme.appThemeColor : theme.cardBackground }]}
@@ -659,11 +659,11 @@ const Setting = ({ navigation }) => {
                                 setCategoryForm(prev => ({ ...prev, type: 'expense' }));
                             }}
                         >
-                            <Text style={styles.buttonText}>Expense</Text>
+                            <Text style={{ color: categoryType !== 'income' ? '#fff' : theme.color }}>Expense</Text>
                         </TouchableOpacity>
                     </View>
 
-                    <TouchableOpacity 
+                    <TouchableOpacity
                         style={styles.addButton}
                         onPress={() => {
                             setCategoryForm({ name: '', icon: 'add-circle-outline', type: categoryType });
@@ -726,10 +726,10 @@ const Setting = ({ navigation }) => {
                                 placeholder="Category Name"
                                 placeholderTextColor={theme.color + '80'}
                                 value={categoryForm.name}
-                                onChangeText={(text) => setCategoryForm({...categoryForm, name: text})}
+                                onChangeText={(text) => setCategoryForm({ ...categoryForm, name: text })}
                             />
 
-                            <TouchableOpacity 
+                            <TouchableOpacity
                                 style={styles.iconSelector}
                                 onPress={() => {
                                     setCurrentEditingForm('category');
@@ -743,7 +743,7 @@ const Setting = ({ navigation }) => {
                             </TouchableOpacity>
 
                             <View style={styles.buttonContainer}>
-                                <TouchableOpacity 
+                                <TouchableOpacity
                                     style={[styles.addButton, { flex: 1 }]}
                                     onPress={handleSaveCategory}
                                 >
@@ -758,7 +758,7 @@ const Setting = ({ navigation }) => {
 
                 <View style={styles.section}>
                     <Text style={styles.sectionTitle}>Backup Settings</Text>
-                    
+
                     <TouchableOpacity style={styles.settingItem} onPress={handleManualBackup}>
                         <View style={styles.settingItemLeft}>
                             <Icon name="save" size={24} color={theme.color} />
@@ -793,8 +793,8 @@ const Setting = ({ navigation }) => {
             {isLoading && (
                 <View style={styles.loadingOverlay}>
                     <View style={styles.loadingContainer}>
-                        <ActivityIndicator 
-                            size="large" 
+                        <ActivityIndicator
+                            size="large"
                             color={theme.appThemeColor}
                             style={styles.loadingSpinner}
                         />

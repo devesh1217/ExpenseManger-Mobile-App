@@ -9,7 +9,7 @@ const TransectionHeader = ({ total, isIncome }) => {
             justifyContent: 'space-between',
             width: '100%',
             marginVertical: 8,
-            backgroundColor: '#333',
+            backgroundColor: theme.backgroundColor,
             paddingVertical: 4,
             paddingHorizontal: 8
         },
@@ -19,10 +19,11 @@ const TransectionHeader = ({ total, isIncome }) => {
             width: '100%',
         },
         title: {
+            color: theme.color,
             fontSize: 18
         },
         amount: {
-            color: isIncome ? '#2a2' : '#a22',
+            color: isIncome ? '#2a2' : 'rgba(245, 43, 43, 1)',
             fontSize: 18,
         },
     });
