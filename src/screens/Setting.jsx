@@ -4,20 +4,14 @@ import { useTheme } from '../hooks/ThemeContext';
 import Icon from 'react-native-vector-icons/Ionicons';
 import { getAccounts, addCustomAccount, getCategories, addCustomCategory, getAccountBalance, updateDefaultAccount, getAllAccountBalances, updateAccount, addAccount, deleteAccount, updateCategory, addCategory, deleteCategory } from '../utils/database';
 import { accountIcons } from '../constants/iconOptions';
-import { createBackup, checkBackupExists, restoreFromBackup } from '../utils/backupUtils';
-import { setBackupInterval, getBackupInterval, BackupIntervals, getLastBackupDate, checkAndCreateBackup } from '../utils/autoBackupUtils';
-import CustomPicker from '../components/common/CustomPicker';
-import AsyncStorage from '@react-native-async-storage/async-storage';
-import { format } from 'date-fns';
+import { createBackup } from '../utils/backupUtils';
 
 const Setting = ({ navigation }) => {
     const { theme, toggleTheme } = useTheme();
     const [accounts, setAccounts] = useState([]);
     const [categories, setCategories] = useState({ income: [], expense: [] });
     const [newAccount, setNewAccount] = useState('');
-    const [newCategory, setNewCategory] = useState('');
     const [categoryType, setCategoryType] = useState('income');
-    const [balances, setBalances] = useState({});
     const [allAccounts, setAllAccounts] = useState([]);
     const [selectedIcon, setSelectedIcon] = useState('wallet-outline');
     const [showIconPicker, setShowIconPicker] = useState(false);
@@ -36,9 +30,6 @@ const Setting = ({ navigation }) => {
     const [showCategoryModal, setShowCategoryModal] = useState(false);
     const [editingCategory, setEditingCategory] = useState(null);
     const [currentEditingForm, setCurrentEditingForm] = useState(null);
-    const [backupInterval, setInterval] = useState(BackupIntervals.WEEKLY);
-    const [lastBackup, setLastBackup] = useState(null);
-    const [showBackupIntervalPicker, setShowBackupIntervalPicker] = useState(false);
     const [isLoading, setIsLoading] = useState(false);
     const [loadingMessage, setLoadingMessage] = useState('');
 
@@ -52,16 +43,8 @@ const Setting = ({ navigation }) => {
         setLoadingMessage('');
     };
 
-    const backupIntervalOptions = [
-        { label: 'Daily', value: BackupIntervals.DAILY, icon: 'time' },
-        { label: 'Weekly', value: BackupIntervals.WEEKLY, icon: 'calendar' },
-        { label: 'Monthly', value: BackupIntervals.MONTHLY, icon: 'calendar-clear' },
-        { label: 'Never', value: BackupIntervals.NEVER, icon: 'close-circle' }
-    ];
-
     useEffect(() => {
         loadData();
-        loadBackupSettings();
     }, []);
 
     const loadData = async () => {
@@ -72,13 +55,6 @@ const Setting = ({ navigation }) => {
         setAccounts(fetchedAccounts);
         setCategories(fetchedCategories);
         setAllAccounts(allAccountBalances);
-    };
-
-    const loadBackupSettings = async () => {
-        const interval = await getBackupInterval();
-        const lastBackupDate = await getLastBackupDate();
-        setInterval(interval);
-        setLastBackup(lastBackupDate);
     };
 
     const handleAddAccount = async () => {
@@ -233,19 +209,16 @@ const Setting = ({ navigation }) => {
         setShowIconPicker(false);
     };
 
-    const handleBackupIntervalChange = async (newInterval) => {
-        await setBackupInterval(newInterval);
-        await loadBackupSettings();
-    };
-
     const handleManualBackup = async () => {
         try {
-            const backupPath = await checkAndCreateBackup(true);
+            showLoader('Creating backup...');
+            const backupPath = await createBackup();
+            hideLoader();
             if (backupPath) {
-                Alert.alert('Backup Success', 'Manual backup created successfully');
-                await loadBackupSettings();
+                Alert.alert('Backup Success', `Backup created successfully at ${backupPath}`);
             }
         } catch (error) {
+            hideLoader();
             Alert.alert('Backup Failed', 'Failed to create backup');
         }
     };
@@ -766,27 +739,6 @@ const Setting = ({ navigation }) => {
                         </View>
                         <Icon name="chevron-forward" size={24} color={theme.color} />
                     </TouchableOpacity>
-
-                    <View style={styles.settingItem}>
-                        <View style={styles.settingItemLeft}>
-                            <Icon name="time" size={24} color={theme.color} />
-                            <Text style={styles.settingText}>Auto Backup Interval</Text>
-                        </View>
-                        <CustomPicker
-                            value={backupInterval}
-                            options={backupIntervalOptions}
-                            onValueChange={handleBackupIntervalChange}
-                            placeholder="Select Interval"
-                            visible={showBackupIntervalPicker}
-                            setVisible={setShowBackupIntervalPicker}
-                        />
-                    </View>
-
-                    {lastBackup && (
-                        <Text style={styles.lastBackupText}>
-                            Last backup: {lastBackup.toLocaleDateString()}
-                        </Text>
-                    )}
                 </View>
             </ScrollView>
 

@@ -3,30 +3,29 @@ import RNHTMLtoPDF from 'react-native-html-to-pdf';
 import Share from 'react-native-share';
 import { Alert, PermissionsAndroid, Platform, Linking } from 'react-native';
 
-const requestStoragePermission = async () => {
+export const requestStoragePermission = async () => {
     if (Platform.OS !== 'android') return true;
 
     try {
-        // Check if we already have permission
-        const hasPermission = await PermissionsAndroid.check(
-            PermissionsAndroid.PERMISSIONS.WRITE_EXTERNAL_STORAGE
-        );
-
-        if (hasPermission) return true;
-
-        // Request permission if we don't have it
-        const granted = await PermissionsAndroid.request(
+        const writeGranted = await PermissionsAndroid.request(
             PermissionsAndroid.PERMISSIONS.WRITE_EXTERNAL_STORAGE,
             {
-                title: "Storage Permission Required",
-                message: "This app needs access to your storage to save exported files.",
-                buttonNeutral: "Ask Me Later",
-                buttonNegative: "Cancel",
+                title: "Storage Write Permission Required",
+                message: "This app needs access to your storage to save files.",
                 buttonPositive: "Grant Permission"
             }
         );
 
-        return granted === PermissionsAndroid.RESULTS.GRANTED;
+        const readGranted = await PermissionsAndroid.request(
+            PermissionsAndroid.PERMISSIONS.READ_EXTERNAL_STORAGE,
+            {
+                title: "Storage Read Permission Required",
+                message: "This app needs access to your storage to read backup files.",
+                buttonPositive: "Grant Permission"
+            }
+        );
+
+        return writeGranted === PermissionsAndroid.RESULTS.GRANTED && readGranted === PermissionsAndroid.RESULTS.GRANTED;
     } catch (err) {
         console.error('Permission request error:', err);
         return false;

@@ -2,13 +2,15 @@ import RNFS from 'react-native-fs';
 import SQLite from 'react-native-sqlite-storage';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 
+import { pick, types, isCancel  } from '@react-native-documents/picker';
+
+
 const DB_NAME = 'MyExpenseManager.db';
-const BACKUP_DIR = `${RNFS.ExternalDirectoryPath}/backup`;
+const BACKUP_DIR = `${RNFS.DownloadDirectoryPath}/ArthaLekha/backup`;
 const BACKUP_FILE = `${BACKUP_DIR}/ArthaLekha_backup.json`;
 
 export const createBackup = async () => {
     try {
-        // Ensure backup directory exists
         await RNFS.mkdir(BACKUP_DIR);
 
         // Get database data
@@ -42,11 +44,19 @@ export const createBackup = async () => {
         const allSettings = await AsyncStorage.multiGet(allKeys);
         backupData.settings = Object.fromEntries(allSettings);
 
-        // Save backup file
-        await RNFS.writeFile(BACKUP_FILE, JSON.stringify(backupData), 'utf8');
-        
+        // Write to temp file first
+        const tempFilePath = `${RNFS.CachesDirectoryPath}/ArthaLekha_backup_${Date.now()}.json`;
+        await RNFS.writeFile(tempFilePath, JSON.stringify(backupData), 'utf8');
+
+        // Copy to backup destination (overwrite if exists)
+        await RNFS.copyFile(tempFilePath, BACKUP_FILE);
+
+        // Delete temp file
+        await RNFS.unlink(tempFilePath);
+
         return BACKUP_FILE;
     } catch (error) {
+        console.log(error, error.message)
         console.error('Backup error:', error);
         throw error;
     }
@@ -54,12 +64,15 @@ export const createBackup = async () => {
 
 export const restoreFromBackup = async () => {
     try {
-        const backupExists = await RNFS.exists(BACKUP_FILE);
-        if (!backupExists) {
-            throw new Error('No backup file found');
-        }
+        const res = await pick({
+            type: [types.json],
+            allowMultiSelection: false,
+            copyTo: 'documentDirectory',
+            presentationStyle: 'fullScreen',
+            initialDirectory: BACKUP_DIR
+        });
 
-        const backupContent = await RNFS.readFile(BACKUP_FILE, 'utf8');
+        const backupContent = await RNFS.readFile(res[0].uri, 'utf8');
         const backupData = JSON.parse(backupContent);
         const db = SQLite.openDatabase({ name: DB_NAME, location: 'default' });
 
@@ -88,9 +101,14 @@ export const restoreFromBackup = async () => {
         await AsyncStorage.multiSet(Object.entries(backupData.settings));
 
         return true;
-    } catch (error) {
-        console.error('Restore error:', error);
-        throw error;
+    } catch (err) {
+        if (isCancel(err)) {
+            // User cancelled the picker
+            return false;
+        } else {
+            console.error('Restore error:', err);
+            throw err;
+        }
     }
 };
 
