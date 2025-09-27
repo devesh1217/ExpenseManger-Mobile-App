@@ -11,11 +11,9 @@ const SetupGuide = ({ navigation }) => {
     const { theme } = useTheme();
     const [step, setStep] = useState(0);
     const [accounts, setAccounts] = useState([]);
-    const [categories, setCategories] = useState({ income: [], expense: [] });
     const [loading, setLoading] = useState(true);
     const [newAccount, setNewAccount] = useState('');
     const [newCategory, setNewCategory] = useState('');
-    const [categoryType, setCategoryType] = useState('income');
     const [showIconPicker, setShowIconPicker] = useState(false);
     const [currentEditingForm, setCurrentEditingForm] = useState(null);
     const [newAccountIcon, setNewAccountIcon] = useState('wallet-outline');
@@ -31,9 +29,7 @@ const SetupGuide = ({ navigation }) => {
     const loadInitialData = async () => {
         try {
             const accounts = await getAccounts();
-            const categories = await getCategories();
             setAccounts(accounts);
-            setCategories(categories);
             setLoading(false);
         } catch (error) {
             console.error('Error loading data:', error);
@@ -169,7 +165,7 @@ const SetupGuide = ({ navigation }) => {
             </TouchableOpacity>
 
             <View style={styles.progressIndicator}>
-                {[...Array(3)].map((_, index) => (
+                {[...Array(2)].map((_, index) => (
                     <View
                         key={index}
                         style={[
@@ -188,13 +184,13 @@ const SetupGuide = ({ navigation }) => {
                     styles.headerButton,
                     { backgroundColor: theme.appThemeColor }
                 ]}
-                onPress={step === 2 ? completeSetup : () => setStep(prev => prev + 1)}
+                onPress={step === 1 ? completeSetup : () => setStep(prev => prev + 1)}
             >
                 <Text style={styles.headerButtonText}>
-                    {step === 2 ? 'Finish' : 'Next'}
+                    {step === 1 ? 'Finish' : 'Next'}
                 </Text>
                 <Icon
-                    name={step === 2 ? "checkmark" : "chevron-forward"}
+                    name={step === 1 ? "checkmark" : "chevron-forward"}
                     size={24}
                     color="white"
                 />
@@ -419,9 +415,9 @@ const SetupGuide = ({ navigation }) => {
         </View>
     );
     const renderAccountStep = () => (
-        <View style={styles.stepContainer}>
-            <Text style={styles.stepTitle}>Step 1: Setup Your Accounts</Text>
-            <Text style={styles.note}>
+        <ScrollView style={styles.stepContainer}>
+            <Text style={styles.stepTitle}>Setup Your Accounts</Text>
+            <Text style={[styles.note, { marginBottom: 10 }]}>
                 Default accounts 'Cash', 'Bank', and 'Card' are created for you. You can adjust their opening balances now or later in settings.
             </Text>
             {accounts.map(account => (
@@ -446,11 +442,9 @@ const SetupGuide = ({ navigation }) => {
                             keyboardType="numeric"
                             onEndEditing={(e) => handleAccountBalanceUpdate(account.id, e.nativeEvent.text)}
                         />
-                        {account.isPermanent !== 1 && (
-                            <TouchableOpacity onPress={() => handleAccountDelete(account.id)}>
-                                <Icon name="trash-outline" size={24} color="#EF5350" />
-                            </TouchableOpacity>
-                        )}
+                        <TouchableOpacity onPress={() => handleAccountDelete(account.id)} disabled={account.isPermanent === 1} style={{ marginLeft: 12, marginBottom: 8 }}>
+                            <Icon name="trash-outline" size={24} color={account.isPermanent === 1 ? "#8b8b8bff" : "#EF5350"} />
+                        </TouchableOpacity>
                     </View>
                 </View>
             ))}
@@ -477,66 +471,15 @@ setShowIconPicker(true);
                     <Text style={styles.buttonText}>Add Account</Text>
                 </TouchableOpacity>
             </View>
-        </View>
+        </ScrollView>
     );
 
-    const renderCategoryStep = () => (
-        <View style={styles.stepContainer}>
-            <Text style={styles.stepTitle}>Step 2: Customize Categories</Text>
-            <Text style={styles.note}>
-                Default categories are provided. You can add your own custom categories.
-            </Text>
-            <View style={{ flexDirection: 'row', marginBottom: 8 }}>
-                <TouchableOpacity
-                    style={[styles.addButton, { flex: 1, marginRight: 8, backgroundColor: categoryType === 'income' ? theme.appThemeColor : theme.cardBackground }]}
-                    onPress={() => setCategoryType('income')}
-                >
-                    <Text style={{ color: categoryType === 'income' ? '#fff' : theme.color }}>Income</Text>
-                </TouchableOpacity>
-                <TouchableOpacity
-                    style={[styles.addButton, { flex: 1, backgroundColor: categoryType === 'expense' ? theme.appThemeColor : theme.cardBackground }]}
-                    onPress={() => setCategoryType('expense')}
-                >
-                    <Text style={{ color: categoryType !== 'income' ? '#fff' : theme.color }}>Expense</Text>
-                </TouchableOpacity>
-            </View>
-            {categories[categoryType]?.map(cat => (
-                <View key={cat.id} style={styles.card}>
-                    <Text style={styles.accountName}>{cat.name}</Text>
-                </View>
-            ))}
-            <View style={styles.card}>
-                <TextInput
-                    style={styles.input}
-                    placeholder="New Category Name"
-                    placeholderTextColor={theme.color + '80'}
-                    value={newCategory}
-                    onChangeText={setNewCategory}
-                />
-                <TouchableOpacity
-                    style={styles.iconSelector}
-                    onPress={() => {
-                        setCurrentEditingForm('category');
-                        setShowIconPicker(true);
-                    }}
-                >
-                    <Icon name={newCategoryIcon} size={24} color={theme.color} />
-                    <Text style={{ color: theme.color, marginLeft: 8 }}>Select Icon</Text>
-                </TouchableOpacity>
-                <TouchableOpacity style={styles.addButton} onPress={handleAddCategory}>
-                    <Text style={styles.buttonText}>Add Category</Text>
-                </TouchableOpacity>
-            </View>
-        </View>
-    );
-
-    return (
+        return (
         <SafeAreaView style={styles.container}>
             {renderHeader()}
             <ScrollView contentContainerStyle={styles.content}>
                 {step === 0 && renderRestoreStep()}
                 {step === 1 && renderAccountStep()}
-                {step === 2 && renderCategoryStep()}
             </ScrollView>
 
             <Modal

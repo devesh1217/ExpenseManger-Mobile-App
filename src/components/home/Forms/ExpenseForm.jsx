@@ -63,13 +63,13 @@ const ExpenseForm = ({ onClose, navigation }) => {
                 getCategories(),
                 getMostFrequentCategory('expense')
             ]);
-            
+
             setCustomAccounts(accounts.map(acc => ({
                 label: acc.name,
                 value: acc.name,
                 icon: acc.icon || 'wallet-outline'
             })));
-            
+
             setCustomCategories(categories.expense.map(cat => ({
                 label: cat.name,
                 value: cat.name,
@@ -181,16 +181,16 @@ const ExpenseForm = ({ onClose, navigation }) => {
         };
         insertTransaction(transaction, counter);
         dispatch(addExpense(transaction));
-        
+
         clearFormState('expense');
-        
+
         if (navigation) {
             navigation.navigate('Monthly', { reload: Date.now() });
             navigation.navigate('Yearly', { reload: Date.now() });
             navigation.navigate('Charts', { reload: Date.now() }); // Add Charts navigation
             navigation.navigate('Home');
         }
-        
+
         Alert.alert('Expense saved!');
         onClose?.();
     };
@@ -255,22 +255,28 @@ const ExpenseForm = ({ onClose, navigation }) => {
             </View>
 
             <View style={styles.pickerContainer}>
-                <CustomPicker
-                    value={expenseForm.account}
-                    options={customAccounts}
-                    onValueChange={(value) => setExpenseForm({ ...expenseForm, account: value })}
-                    placeholder="Account"
-                    visible={showAccountPicker}
-                    setVisible={setShowAccountPicker}
-                />
-                <CustomPicker
-                    value={expenseForm.category}
-                    options={customCategories}
-                    onValueChange={(value) => setExpenseForm({ ...expenseForm, category: value })}
-                    placeholder="Category"
-                    visible={showCategoryPicker}
-                    setVisible={setShowCategoryPicker}
-                />
+                <View>
+                    <Text style={styles.label}>Account</Text>
+                    <CustomPicker
+                        value={expenseForm.account}
+                        options={customAccounts}
+                        onValueChange={(value) => setExpenseForm({ ...expenseForm, account: value })}
+                        placeholder="Account"
+                        visible={showAccountPicker}
+                        setVisible={setShowAccountPicker}
+                    />
+                </View>
+                <View>
+                    <Text style={[styles.label, {textAlign: 'right'}]}>Category</Text>
+                    <CustomPicker
+                        value={expenseForm.category}
+                        options={customCategories}
+                        onValueChange={(value) => setExpenseForm({ ...expenseForm, category: value })}
+                        placeholder="Category"
+                        visible={showCategoryPicker}
+                        setVisible={setShowCategoryPicker}
+                    />
+                </View>
             </View>
 
             <View style={styles.inputGroup}>
@@ -291,7 +297,7 @@ const ExpenseForm = ({ onClose, navigation }) => {
             </View>
 
             <View style={styles.btnWrapper}>
-                <Pressable 
+                <Pressable
                     style={({ pressed }) => [
                         styles.btn,
                         { opacity: pressed ? 0.8 : 1 }

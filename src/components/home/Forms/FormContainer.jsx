@@ -74,13 +74,13 @@ const FormContainer = ({ onClose }) => {
                     style={[styles.tab, activeForm === 'income' && styles.activeTab]} 
                     onPress={() => toggleForm('income')}
                 >
-                    <Text style={styles.tabText}>Income</Text>
+                    <Text style={styles.tabText}>Expense</Text>
                 </TouchableOpacity>
                 <TouchableOpacity 
                     style={[styles.tab, activeForm === 'expense' && styles.activeTab]} 
                     onPress={() => toggleForm('expense')}
                 >
-                    <Text style={styles.tabText}>Expense</Text>
+                    <Text style={styles.tabText}>Income</Text>
                 </TouchableOpacity>
             </View>
             
@@ -99,10 +99,10 @@ const FormContainer = ({ onClose }) => {
                 ]}
             >
                 <View style={styles.formWrapper}>
-                    <IncomeForm onClose={onClose} navigation={navigation} />
+                    <ExpenseForm onClose={onClose} navigation={navigation} />
                 </View>
                 <View style={styles.formWrapper}>
-                    <ExpenseForm onClose={onClose} navigation={navigation} />
+                    <IncomeForm onClose={onClose} navigation={navigation} />
                 </View>
             </Animated.View>
         </ScrollView>

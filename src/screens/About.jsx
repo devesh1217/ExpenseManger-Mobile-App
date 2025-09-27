@@ -2,6 +2,8 @@ import React from 'react';
 import { View, Text, StyleSheet, ScrollView, TouchableOpacity, Linking } from 'react-native';
 import { useTheme } from '../hooks/ThemeContext';
 import Icon from 'react-native-vector-icons/Ionicons';
+const packageJson = require('../../package.json');
+
 
 const About = ({ navigation }) => {
     const { theme } = useTheme();
@@ -131,7 +133,7 @@ const About = ({ navigation }) => {
             </View>
 
             <View style={styles.section}>
-                <Text style={styles.version}>Version 1.0.0</Text>
+                <Text style={styles.version}>Version v{packageJson.version}</Text>
                 <Text style={styles.version}>
                     © 2023 Devesh Mehta. All rights reserved.
                 </Text>
